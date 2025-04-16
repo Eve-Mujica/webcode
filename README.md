@@ -11,6 +11,7 @@
 - videos
   - 各种.json
   - 视频系列1
+    - 视频文件_UUID.mp4 
   - 视频系列2
 - images
   - 各种图标
