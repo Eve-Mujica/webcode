@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <style>
+      body {
+        background-color: #1a1a1a;
+        color: #fff;
+        font-family: 'Segoe UI', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .login-box {
+        background: #333;
+        padding: 0px 20px 20px 20px;
+        border-radius: 8px;
+      }
+      input {
+        width: 90%;
+        padding: 8px;
+        margin: 8px 0;
+        border-radius: 4px;
+        border: none;
+      }
+      button {
+        padding: 5px 15px;
+        border: none;
+        border-radius: 4px;
+        background: #00ccff;
+        color: #fff;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+      <h3>登录</h3>
+      <input type="text" id="username" placeholder="用户名">
+      <input type="password" id="password" placeholder="密码">
+      <button onclick="login()">登录</button>
+    </div>
+
+    <script>
+
+    const LocalHost = 'sakikobird.cn';
+
+    const API_BASE = `https://${LocalHost}:3000`; // 后端地址
+
+      async function login() {
+          const username = document.getElementById('username').value;
+          const password = document.getElementById('password').value;
+          try {
+              const response = await fetch(`${API_BASE}/login`, {
+                  method: 'POST',
+                  credentials: 'include', // 允许跨域请求携带cookie
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ username, password })
+              });
+              if (!response.ok) {
+                  alert('登录失败');
+                  return;
+              }
+              const data = await response.json();
+              if (data.success) {
+                  // 登录成功后重定向进入主页面
+                  window.location.href = '/';
+              }
+          } catch (error) {
+              console.error('登录出错:', error);
+              alert('登录出错');
+          }
+      }
+    </script>
+
+
+</body></html>

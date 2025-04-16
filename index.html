@@ -1,0 +1,3455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS道具</title>
+    <!-- <link rel="icon" href="https://sakikobird.cn/favicon.ico" type="image/x-icon"> -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        /* 新增顶部标题栏样式 */
+        header {
+            background-color: #a2e3ff30;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1px 0px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+        }
+        header .site-title {
+        font-size: 1.5em;
+        font-weight: bold;
+        }
+        header .user-info {
+        font-size: 1em;
+        }
+        header button {
+            background-color: #a2e3ff4d;
+            border: none;
+            color: white;
+            padding: 3px 70px 3px 40px;
+            border-radius: 0px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        /* 基础样式 */
+        body {
+            display: flex;
+            flex-direction: column;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding-left: 4vh;
+            padding-right: 4vh;
+            height: 95vh;
+            gap: 10px;
+            margin-top: 3vh;
+        }
+
+        /* 主播放区容器 */
+        .main-content {
+            /* flex: 3; */
+            /* min-width: 100px; */
+            width: 78.5%;
+            height: 92vh;
+            /* min-height: 92.017vh; */
+        }
+
+        /* 视频容器样式 */
+        .video-container {
+            background-color: #000;
+            border-radius: 0 0 2px 2px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            position: relative; 
+            cursor: default; /* 初始可见光标 */
+        }
+
+        /* 隐藏光标的类 */
+        .video-container.hide-cursor {
+            cursor: none !important;
+        }
+
+        video {
+            width: 100%;
+            /* height: 80vh; */
+            max-height: 88vh;
+            display: block;
+            aspect-ratio: 16 / 9;
+        }
+
+        /* 控制栏样式 */
+        .controls {
+            padding: 3px;
+            background-color: #2d2d2d;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(
+                to top,  /* 漸變方向朝上（底部更透明） */
+                rgba(31, 31, 31, 0.7) 20%,     /* 底部較深 */
+                rgba(31, 31, 31, 0.4) 60%,    /* 中間過渡 */
+                rgba(31, 31, 31, 0) 100%      /* 頂部完全透明 */
+            ); /* 半透明背景 */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        button {
+            background-color: #41414114;
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background-color: #7373730f;
+            transform: translateY(-1px);
+        }
+
+        cubutton {
+            background-color: rgba(0, 204, 255, 0);
+            border: none;
+            color: rgb(190, 28, 82);
+            padding: 2px 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position:relative;  
+            top: -30vh;
+            left: 3vh;
+        }
+
+        cubutton:hover {
+            background-color: #666;
+            transform: translateY(-1px);
+        }
+
+        /* 进度条样式 */
+        .progress-container {
+            position: relative;
+            flex: 1;
+            height: 6px;
+            background-color: #71717157;
+            border-radius: 1px;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        .progress-bar {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, #00aeec, #00ccff);
+            width: 0%;
+            border-radius: 1px;
+            transition: width 0.1s linear;
+        }
+
+        .buffer-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.2); /* 半透明白色 */
+            width: 0%;
+            transition: width 0.3s ease;
+            z-index: 1; /* 位于进度条下方 */
+        }
+
+        /* 右侧视频列表 */
+        .series-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            /* background: #2d2d2d; */
+            /* border-radius: 8px 8px 0 0; */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 三列布局 */
+            gap: 8px;
+            /*padding: 10px 30px;*/
+            overflow-x: auto;
+            margin-bottom: 10px;
+            flex-shrink: 0; /* 防止被挤压 */
+        }
+
+        .series-nav button {
+            /* width: 100%; 占满网格单元格 */
+            min-width: 25px;
+            padding: 3px;
+            text-align: center;
+            white-space: normal; /* 允许按钮文字换行 */
+            line-height: 1.4;
+            color: #ffeb9d;
+            border-radius: 1px;
+            background-color: #2d2d2d78;
+        }
+
+        .series-nav button:hover {
+            background-color: #7373730f;
+            transform: translateY(-1px);
+        }
+        /* 系列分组样式 */
+
+        .series-group {
+            flex: 1;
+            overflow: visible;
+            border-radius: 5px 5px 5px 5px;
+            /* overflow-x: hidden; */
+            /* overflow-y: auto; */
+            /* padding-bottom: 20px; */
+            /* margin-bottom: 25px; */
+        }
+
+        .series-title {
+            color: #00ccff;
+            font-size: 1.1em;
+            /* padding: 10px; */
+            /* background: #333; */
+            border-radius: 6px;
+            margin-bottom: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .video-list {
+            flex: 1;
+            max-width: 20%;
+            background-color: #2d2d2d42;
+            border-radius: 4px;
+            padding: 10px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            overflow-y: auto;
+            position: relative;
+            height: 92vh;
+            display: flex;
+            flex-direction: column;
+            left: 2vh;
+            overscroll-behavior: contain;
+            overflow-x: hidden;
+        }
+
+        .video-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .video-list::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .video-list::-webkit-scrollbar-thumb {
+            background: #00ccff;
+        }
+
+        /* 视频列表项 */
+        .video-item {
+            padding: 8px;
+            margin: 4px 0;
+            background-color: #363636;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 
+                max-height 0.3s ease-out,
+                opacity 0.2s ease-out;
+            max-height: 1000px; /* 根据实际内容调整 */
+            opacity: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow-y: visible !important; /* 禁止垂直滚动 */
+            position: relative;
+        }
+
+        .video-item:hover {
+            background-color: #4a4a4a;
+            transform: translateX(5px);
+        }
+
+        .video-item.active {
+            background: linear-gradient(90deg, #37fba03b, #3cdafd21);
+            border-left: 4px solid #00ff88;
+            animation: highlight 1.5s ease-out;
+            color: #47cdff;
+        }
+
+        
+        @keyframes highlight {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* 音量控制 */
+        input[type="range"] {
+            width: 100px;
+            height: 6px;
+            background: #404040;
+            border-radius: 3px;
+            margin-top: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #00aeec;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .meta-info {
+            display: flex;
+            /*justify-content: space-between;*/
+            margin-top: 4px;
+            font-size: 0.85em;
+            color: #888;
+            }
+
+            .play-count {
+            color: #00ccff;
+            margin-left: 8px;
+            }
+        
+        .UploadPlace{
+            width: 50px;          /* 固定宽度 */
+            height: 820px;
+        }
+
+        #dropZone {
+            width: 6vh;          /* 固定宽度 */
+            height: 91.5vh;        /* 设置足够高度 */
+            writing-mode: vertical-rl;  /* 文字垂直从右向左排列 */
+            text-orientation: upright;  /* 保持字符直立 */
+            letter-spacing: 8px;  /* 增加字符间距 */
+            /*padding: 5px 8px;     调整内边距 */
+            line-height: 1.5;     /* 行高调整 */
+            display: flex;
+            align-items: center;  /* 垂直居中 */
+            justify-content: center; /* 水平居中 */
+            border-color: #00ccff;
+            background: rgba(0, 204, 255, 0.1);
+            /* transition: background 0.3s; */
+            border: 2px dashed #666;
+            text-align: center;
+            transition: all 0.3s;
+            min-height: 150px; /* 保证高度不变 */
+            flex-direction: column; /* 竖向排列内容 */
+            position: relative;
+            left: 3vh;
+            }
+
+        /* 反馈信息样式 */
+        .feedback-message {
+        font-size: 16px;
+        margin: 10px 0;
+        flex-direction: column;
+        }
+
+        .speed-message {
+        font-size: 10px;
+        margin: 2px 0;       /* 减少上下间距 */
+        letter-spacing: 0;   /* 减少字母间距 */
+        line-height: 1;      /* 调整行高以紧凑显示 */
+        flex-direction: column;
+        }
+
+        .success {
+        border-color: #00ff88;
+        background: rgba(0, 255, 136, 0.1);
+        }
+
+        .error {
+        border-color: #ff4757;
+        background: rgba(255, 71, 87, 0.1);
+        }
+
+        /* 文件信息样式 */
+        .file-info {
+        font-size: 8px;
+        color: #888;
+        margin-top: 12px;
+        letter-spacing: 0px;
+        }
+
+        .progress {
+        height: 100%;
+        background: #00ccff;
+        transition: width 0.3s;
+        }
+
+        #dropZone:hover {
+        background: rgba(0, 204, 255, 0.2);
+        }
+
+        #dropZone::after {
+        content: "↓";
+        position: absolute;
+        bottom: 10px;
+        font-size: 24px;
+        color: #00ccff;
+        animation: float 2s infinite;
+        }
+
+        @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+        }
+
+        /* 折叠控制样式 */
+        .series-header {
+        display: flex;
+        justify-content: space-between;
+        border-radius: 5px 5px 5px 5px;
+        align-items: center;
+        cursor: pointer;
+        padding: 10px;
+        transition: background 0.2s;
+        }
+
+        .series-header:hover {
+        background: #404040;
+        }
+
+        .collapse-icon {
+        font-size: 0.8em;
+        transition: transform 0.2s;
+        }
+
+        /* 折叠状态 */
+        .series-group.collapsed .video-items {
+        max-height: 0 !important;
+        opacity: 0;
+        overflow: hidden;
+        }
+
+        .series-group.collapsed .collapse-icon {
+        transform: rotate(-90deg);
+        }
+
+        /* 展开动画 */
+        .video-items {
+            padding: 1px 4px 4px 4px;
+            transition: 
+                max-height 0.3s ease-out,
+                opacity 0.2s ease-out;
+            max-height: 5000px;
+            opacity: 1;
+        }
+
+        .share-btn {
+            background: none;
+            border: none;
+            color: #00ccff;
+            /* margin-left: auto; */
+            padding: 5px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            margin-top: 1px;
+        }
+
+        .share-btn:hover {
+        opacity: 1;
+        }
+
+        .subseries-group {
+            margin-left: 3px;
+            border-left: 2px solid #555;
+            padding-left: 8px;
+        }
+        .subseries-header {
+            cursor: pointer;
+            padding: 4px;
+            background: #333;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .subseries-title {
+            /* font-weight: bold; */
+            color: #00ffe1c2;
+        }
+        .subseries-group.collapsed .video-items {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.3s, opacity 0.25s;
+        }
+        .subseries-group .video-items {
+            transition: max-height 0.3s, opacity 0.25s;
+        }
+        .series-content {
+            transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+            max-height: 5000px;
+            opacity: 1;
+        }
+        .series-group.collapsed .series-content {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .move-btn {
+            padding: 5px;
+            /* margin-left: auto;         将按钮推到右侧 */
+            background: none;          /* 无背景 */
+            border: none;              /* 无边框 */
+            color: #bbb;              /* 较浅的颜色 */
+            font-size: 0.8em;          /* 稍小的字体 */
+            opacity: 0.8;              /* 初始低不透明度 */
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            /* margin-bottom: 2px; */
+            background-image: url("/images/move-btn.png");
+            background-size: contain;
+            background-repeat: no-repeat;
+            padding: 8px;
+            /* margin-right: 10px; */
+        }
+
+        .move-btn:hover {
+            opacity: 0.9;              /* 悬停时稍微高一些 */
+        }
+        
+        #commentSection {
+            margin-top:20px;
+            background:#2d2d2d47;
+            padding:4px 0.5% 0.5% 0.5%;
+            /* border-radius:8px; */
+            position: relative;
+            top: -4.5vh;
+            width: 77.5%;
+        }
+
+        #commentList{
+            max-height:50vh; 
+            overflow-y:auto; 
+            margin-bottom:10px; 
+            font-size:0.9em; 
+            padding:2px; 
+            border-radius:6px;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        #commentList::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #commentList::-webkit-scrollbar-track {
+            background: #30303038;
+        }
+
+        #commentList::-webkit-scrollbar-thumb {
+            background: #3c53ff;
+        }
+
+        #playPauseButton .icon {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            /* vertical-align: middle; */
+            margin-right: 8px;
+            /* background-image: url("https://sakikobird.cn/images/play.ico"); 默认为播放图标 */
+            background-image: url("/images/play.ico");
+        }
+
+        #playPauseButton .btn-text {
+            font-size: 1em;
+            color: white;
+            font-family: inherit;
+            /* margin-left: 8px; 调整按钮图标与文字之间的间距 */
+        }
+
+        #videoInfoLabel {
+            font-style: italic;
+            font-size: 0.9em;
+            margin-right: 5px;
+            text-align: right;
+        }
+
+        .subseries-menu div {
+            padding: 2px 5px;
+            cursor: pointer;
+        }
+
+        .subseries-menu div:hover {
+            background-color: #444;
+        }
+        .video-item.dragging {
+            opacity: 0.7;
+            /* border: 1px dashed #00ccff; */
+        }
+
+        .series-group.drag-over {
+        border: 2px dashed #00ccff;
+        background-color: rgba(0,204,255,0.1);
+        }
+
+        .subseries-group.subseries-drag-over {
+        border: 2px dashed #00ff88;
+        background-color: rgba(0,255,136,0.1);
+        }
+
+        .highlight-tag {
+            position: absolute;
+            top: 5px;              /* 距离顶部5px */
+            right: 5px;            /* 距离右侧5px */
+            width: 50px;           /* 标签宽度，可根据需要调整 */
+            height: 8px;           /* 标签高度 */
+            background: transparent;
+            border-radius: 4px;    /* 圆角化 */
+            box-shadow: 0 0 5px rgba(0,0,0,0.3); /* 轻微阴影效果 */
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        /* 鼠标悬停时微微放大，并改变背景颜色的过渡效果 */
+        .highlight-tag:hover {
+            transform: scale(1.05);
+        }
+
+        /* 激活状态：背景变为亮黄色 */
+        .highlight-tag.active {
+            background: linear-gradient(90deg, #FFD700, #FFEC8B);
+        }
+
+        .favorite-star {
+            display: flex;
+            /* width: 8px;  根据需要调整尺寸 */
+            /* height: 8px; */
+            margin-left: auto;
+            background: transparent;
+            /* border: 1px solid #ccc; */
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s, border-color 0.3s;
+            background-image: url("/images/favorite-empty.png");
+            background-size: contain;
+            background-repeat: no-repeat;
+            padding: 8px;
+            margin-right: 10px;
+            opacity: 0.3;
+        }
+
+        .favorite-star:hover {
+            border-color: #aaa;
+        }
+
+        .favorite-star.favorited {
+            background-image: url("/images/favorite-filled.png");
+            opacity: 1;
+        }
+
+        /* 历史列表悬浮窗样式 */
+        .history-window {
+            position: absolute;
+            width: 300px;
+            max-height: 500px;
+            background-color: #222;
+            padding: 10px;
+            /* border: 1px solid #666; */
+            /* border-radius: 4px; */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.8);
+            overflow-y: auto;
+            z-index: 2000;
+            overscroll-behavior: contain;
+            /* opacity: 0.7; */
+            animation: fadeIn 0.5s forwards;
+            
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-out {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        .history-window::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .history-window::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .history-window::-webkit-scrollbar-thumb {
+            background: #00ccff;
+        }
+
+        .history-window .hw-header {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #fff;
+        position: relative;
+        }
+
+        .history-window .hw-close {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        }
+
+        .history-window ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        }
+
+        .history-window li {
+        /* border-bottom: 1px solid #444; */
+        padding: 8px 4px;
+        cursor: pointer;
+        }
+
+        .history-window li:hover {
+            background-color: #00aaff70;
+            transition: 0.2s ease;
+        }
+
+        .history-window li span {
+        color: #fff;
+        }
+
+        .history-window li small {
+        color: #aaa;
+        }
+        
+        .history-button{
+            margin-right : 50px;
+            width : 100px;
+            padding : 3px;
+            background-color : #a3ffa24d;
+            transition : all 0.5s;
+        }
+
+        /* 手机端优化 */
+        @media only screen and (max-width: 1050px) {
+            body {
+                padding: 5px;
+                margin-top: 3vh;
+            }
+            #content {
+                flex-direction: column;
+            }
+            .main-content {
+                width: 100%;
+                height: auto;
+            }
+            .video-list {
+
+                max-width: 85%;
+                max-height: 50vh;
+                margin-top: 10px;
+                left: 2vh;
+            }
+            /* 调整系列导航栏字体、网格布局 */
+            .series-nav {
+                grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+                font-size: 0.8em;
+            }
+            /* 如果需要，可适当调整按钮和文字大小 */
+            .controls button {
+                padding: 6px 10px;
+                font-size: 0.8em;
+            }
+            #dropZone {
+                display: none !important;
+            }
+            #commentSection {
+                top: -2.2vh;
+                width: 100%;
+            }
+            video {
+            height: auto;
+            }
+            .video-list::-webkit-scrollbar {
+            width: 0px;
+            }
+            .video-container{
+                position: auto;
+            }
+            .controls
+            {
+                position: relative;
+                padding: 3px;
+                background-color: #2d2d2d;
+                display: flex;
+                gap: 15px;
+                align-items: center;
+                opacity: 1;
+            }
+            .history-button{
+                width: 80px;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="site-title"></div>
+        <div class="user-info" id="userInfo">
+          <!-- 未登录时显示登录入口 -->
+          <button id="loginBtn" onclick="location.href='/login';">登录</button>
+        </div>
+    </header>
+    <div id="content" style="display: flex; flex: 1;padding-top: 0px;">
+        <div class="main-content">
+            <div id="videoInfoBar" style="border-radius: 0 0 0 0; color: #a2e3ff; padding: 3px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                <div id="videoTitle" style="font-size: 1.2em;color:#00aaff;"></div>
+                <div id="videoMeta" style="font-size: 0.9em;color:#00ccff;font-style: italic; font-size: 0.9em;"></div>
+                <!-- 通过 contenteditable 实现内联编辑，样式确保与显示区域重合 -->
+                <div id="videoSummary" contenteditable="true" style="flex: 1; background: #44444426; padding: 2px; border-radius: 2px; min-width: 200px;margin-right: 2px;font-size: 1em;">
+                  点击这里编辑简介...
+                </div>
+            </div>
+            <div class="video-container">
+                <video id="myVideo" preload="auto">
+                    <source src="" type="video/mp4">
+                </video>
+                <div class="controls">
+                    <button id="playPauseButton" onclick="togglePlayPause()">
+                        <span class="icon"></span>
+                        <span class="btn-text">播放</span>
+                    </button>
+                    <div class="progress-container" onclick="seek(event)">
+                        <div class="buffer-bar"></div>
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <input type="range" id="volume" min="0" max="0.5" step="0.025" value="0.025" 
+                        oninput="setVolume(this.value)" title="音量控制">
+                    <button id="FullScreenButton" onclick="toggleFullscreen()">⛶ 全屏</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="video-list" id="videoList">
+            <!-- 系列导航栏 -->
+            <div class="series-nav" id="seriesNav"></div>
+            
+            <!-- 视频分组列表 -->
+            <div class="series-groups" id="seriesGroups">
+                <div class="series-group" id="series-${series.name}">
+                    <div class="series-header">
+                    <div class="series-title">视频加载中...</div>
+                    <!-- <div class="collapse-icon">▼</div> -->
+                    </div>
+                    <div class="video-items"> <!-- 视频项容器 -->
+                    <!-- 视频项将在此处动态插入 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 在 HTML 中添加拖放区域 -->
+        <div id="UploadPlace">
+            <div id="dropZone">
+                <div class="default-message">上传视频并创建新视频系列</div>
+            </div>
+            <div id="ButtonPlace">
+            <cubutton style="display: none;" onclick="toggleCancelUpload()">✕取消</cubutton>   
+            </div>
+        </div>
+    </div>
+
+    <div id="commentSection">
+        <div style="color:#00ccff;margin-top:0;display: flex; align-items: center;">评论
+            <span id="videoNameLabel" style="font-style: italic; font-size: 0.9em;"></span>
+            <span id="videoInfoLabel"></span>
+            <div id="commentCount" style="margin-left: 5px;"></div>
+        </div>
+        <div id="commentList">
+            <!-- 评论将动态加载到这里 -->
+        </div>
+        <textarea id="commentInput" placeholder="输入评论…  ctrl+enter发送" 
+            style="width: 96%;padding:8px;border-radius:4px;border:none;resize:vertical;background: azure;opacity: 0.5;"></textarea>
+        <button onclick="handleSubmitComment()" 
+                style="margin-top:8px; background:#4a4a4a; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">
+            提交评论
+        </button>
+    </div>
+
+    <div id="progress" style="margin-top: 10px;"></div>
+
+    <form enctype="multipart/form-data; charset=utf-8">
+        <!-- 上传组件 -->
+      </form>
+
+    <script>
+
+        //const LocalHost = 'localhost';
+        //const LocalHost = '154.9.252.117';
+        const LocalHost = 'sakikobird.cn';
+
+        const video = document.getElementById('myVideo');
+        const progressBar = document.getElementById('progressBar');
+        const videoList = document.getElementById('videoList');
+        const API_BASE = `https://${LocalHost}:3000`; // 后端地址
+
+        const Series_Name = {
+            '1': '荒漠迷城',
+            '2': '炼狱小镇',
+            '3': '远古遗迹',
+            '4': '阿努比斯'
+        };
+
+        var seriesOrder = {
+            '荒漠迷城': 10,
+            '炼狱小镇': 20,
+            '远古遗迹': 30,
+            '阿努比斯': 40,
+            '火车停放站': 50,
+            '核子危机': 60,
+            '炙热沙城II': 70,
+            '殒命大厦': 80,
+            '死亡游乐园': 90
+            // 如果有其它系列，可在此添加
+        };
+
+        var seriesinvisible = {};
+
+        var xhr;
+
+        var Default_played = 0; // 默认视频数量
+        var Default_videoId = null; // 默认视频ID
+
+        video.volume = 0.025;
+
+        // 初始化加载视频列表
+        async function initApp(playornot, refreshvideo) {
+            const pathSegments = window.location.pathname.split('/').filter(p => p);
+            let videoId = null;
+
+            // 匹配 /videos/:id/:displayName 或 /videos/:id 格式
+            if (pathSegments.length >= 2 && pathSegments[0] === 'videos') {
+                videoId = pathSegments[1]; // 始终取第二个段作为ID
+            }
+            console.log(videoId);
+
+            try {
+                // 加载完整视频列表
+                const response = await fetch(`${API_BASE}/api/videos`);
+                if (!response.ok) throw new Error(`HTTP错误 ${response.status}`);
+                
+                // 明确数据解构（假设后端返回 { videos: [...] }）
+                const { videos } = await response.json(); // 直接解构 videos
+                
+                // 处理视频分组
+                const seriesMap = processVideos(videos); // 使用 videos 变量
+                renderSeriesNavigation(seriesMap);
+                renderSeriesGroups(seriesMap);
+
+                await loadVideoHighlights(); // 加载视频高亮
+
+                if(refreshvideo == 0) return; // 如果不需要刷新视频，直接返回
+
+                // 处理指定视频ID
+                if (videoId) {
+                    const targetVideo = videos.find(v => v.id === videoId); // 使用 videos
+                    if (targetVideo) {
+                        Default_played = 1;
+                        Default_videoId = videoId;
+                        switchVideo(targetVideo, playornot);
+                        // 滚动到目标视频
+                        const targetItem = document.querySelector(`[data-video-id="${videoId}"]`);
+                        if (targetItem) {
+                            targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            setTimeout(() => { window.scrollTo(0, 0); }, 500);
+                            targetItem.classList.add('active');
+                        }
+                    }
+                } else if (videos.length > 0) { // 使用 videos
+                    console.log(videos[0]);
+                    Default_played = 1;
+                    Default_videoId = videoId;
+                    switchVideo(videos[0], playornot); // 使用 videos
+                }
+            } catch (error) {
+                console.error('初始化失败:', error);
+                const videoList = document.getElementById('videoList');
+                if (videoList) {
+                    videoList.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+                }
+            }
+        }
+
+        // 获取视频名称：尝试从DOM中查找对应视频项的名称（若未找到则返回videoId）
+        function getVideoName(videoId) {
+            const videoItem = document.querySelector(`.video-item[data-video-id="${videoId}"]`);
+            if (videoItem) {
+                const titleElem = videoItem.querySelector('.video-info > div');
+                if (titleElem) {
+                return titleElem.textContent;
+                }
+            }
+            return videoId; // 回退
+        }
+
+        // 优化后的历史记录展示函数，使用模态框展示历史记录
+        async function loadHistory() {
+            if (document.querySelector('.history-window')) return; //   避免重复创建
+
+            // 获取历史播放按钮的位置
+            const historyBtn = document.getElementById('historyBtn');
+            const btnRect = historyBtn.getBoundingClientRect();
+
+            // 创建悬浮窗口，并添加 history-window 这一CSS类
+            const historyWindow = document.createElement('div');
+            historyWindow.classList.add('history-window');
+            // 定位：在按钮下方
+            historyWindow.style.top = (btnRect.bottom + window.scrollY + 5) + 'px';
+            historyWindow.style.left = (btnRect.left + window.scrollX) + 'px';
+
+            // 添加标题区域及关闭按钮
+            const header = document.createElement('div');
+            header.classList.add('hw-header');
+            header.textContent = '历史播放记录';
+            historyWindow.appendChild(header);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.classList.add('hw-close');
+            closeBtn.textContent = ' ';
+            closeBtn.addEventListener('click', () => historyWindow.remove());
+            header.appendChild(closeBtn);
+
+            // 获取本地历史记录（格式为数组）
+            let localHistory = JSON.parse(localStorage.getItem('historyVideos') || '[]');
+            let serverHistory = [];
+            if (window.userLoggedIn) {
+                try {
+                    const res = await fetch(`${API_BASE}/api/history/video`, { credentials: 'include' });
+                    if (res.ok) {
+                        // 假设服务器返回格式： { videoId1: { playedAt, ... }, ... }
+                        const data = await res.json();
+                        serverHistory = Object.entries(data).map(([videoId, info]) => ({ videoId, ...info }));
+                    }
+                } catch (err) {
+                    console.error('获取服务器历史播放失败:', err);
+                }
+            }
+            // 合并两个数据源，以 videoId 去重，并按 playedAt 降序排序（较新的记录在前）
+            const merged = {};
+            localHistory.forEach(item => { merged[item.videoId] = item; });
+            serverHistory.forEach(item => { merged[item.videoId] = item; });
+            const mergedHistory = Object.values(merged);
+            mergedHistory.sort((a, b) => b.playedAt - a.playedAt);
+
+            // 如果有历史记录，则构造列表，否则显示暂无记录
+            if (mergedHistory.length > 0) {
+                const list = document.createElement('ul');
+                mergedHistory.forEach(record => {
+                    const li = document.createElement('li');
+                    // 尝试从 DOM 中获取系列信息
+                    const videoItem = document.querySelector(`.video-item[data-video-id="${record.videoId}"]`);
+                    let seriesName = '';
+                    if (videoItem) {
+                        try {
+                            const info = JSON.parse(videoItem.getAttribute('data-info'));
+                            seriesName = info.series ? info.series + '：' : '';
+                        } catch (err) {
+                            console.error('解析 data-info 失败', err);
+                        }
+                    }
+                    // 使用已有的 getVideoName() 获取视频名称
+                    const videoName = getVideoName(record.videoId);
+                    const playedTimeStr = new Date(record.playedAt).toLocaleString();
+                    li.innerHTML = `<span>${seriesName}${videoName}</span><br><small>播放时间：${playedTimeStr}</small>`;
+                    // 点击后切换视频，并关闭悬浮窗
+                    // 点击后切换视频、展开系列列表，并关闭悬浮窗
+                    li.addEventListener('click', () => {
+                        historyWindow.remove();
+                        // 尝试从对应视频项中获取所属系列信息（假设 data-info 中包含 series 字段）
+                        const videoItem = document.querySelector(`.video-item[data-video-id="${record.videoId}"]`);
+                        if (videoItem) {
+                            try {
+                                const info = JSON.parse(videoItem.getAttribute('data-info'));
+                                const series = info.series;
+                                if (series) {
+                                    expandSeriesList(series);
+                                }
+                            } catch (err) {
+                                console.error('解析 data-info 失败', err);
+                            }
+                        }
+                        loadSpecificVideo(record.videoId);
+                    });
+                    list.appendChild(li);
+                });
+                historyWindow.appendChild(list);
+            } else {
+                const p = document.createElement('p');
+                p.textContent = '暂无历史播放记录';
+                p.style.color = '#ccc';
+                historyWindow.appendChild(p);
+            }
+            
+            document.body.appendChild(historyWindow);
+
+            // 定义定时变量
+            let hideTimeout;
+
+            // 封装一个函数，检查按钮与悬浮窗是否都未悬停
+            function checkAndHide() {
+                if (!historyWindow.matches(':hover') && !historyBtn.matches(':hover')) {
+                    // 移除进入动画属性，保证 transition 能生效
+                    historyWindow.style.animation = 'none';
+                    // 强制重排
+                    historyWindow.offsetHeight;
+                    // 添加淡出类
+                    historyWindow.classList.add('fade-out');
+                }
+            }
+
+            historyWindow.addEventListener('transitionend', (e) => {
+                if(e.propertyName === 'opacity' && historyWindow.classList.contains('fade-out')){
+                    historyWindow.remove();
+                }
+            });
+
+            // 当鼠标离开悬浮窗时延时开始关闭
+            historyWindow.addEventListener('mouseleave', () => {
+                hideTimeout = setTimeout(checkAndHide, 250); // 500ms 后开始淡出
+            });
+            // 同时，当鼠标离开按钮时，如果列表已打开也启动延时检查
+            historyBtn.addEventListener('mouseleave', () => {
+                hideTimeout = setTimeout(checkAndHide, 250);
+            });
+            // 如果鼠标进入任一部分，则取消定时关闭
+            historyWindow.addEventListener('mouseenter', () => {
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
+                historyWindow.classList.remove('fade-out');
+            });
+            historyBtn.addEventListener('mouseenter', () => {
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
+            });
+        }
+
+        function expandSeriesList(series) {
+            // 假设对应系列区域有 id 格式 "series-系列名称"
+            const seriesContainer = document.getElementById('series-' + series);
+            if (seriesContainer) {
+                // 移除收起状态（例如将 'collapsed' 类移除）
+                seriesContainer.classList.remove('collapsed');
+                // 可选：如果需要滚动到该系列区域
+                seriesContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // 添加历史记录入口按钮到用户信息区域
+        async function loadHistoryButton() {
+            const historyBtn = document.createElement('button');
+            historyBtn.id = 'historyBtn';
+            historyBtn.textContent = '历史记录';
+            historyBtn.classList.add('history-button');
+            
+            // 改为鼠标悬停触发加载历史记录
+            historyBtn.addEventListener('mouseenter', loadHistory);
+            const userInfo = document.getElementById('userInfo');
+            userInfo.insertAdjacentElement('afterbegin', historyBtn);
+        }
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch(`${API_BASE}/api/currentUser`, { credentials: 'include' });
+                if (res.ok) {
+                const data = await res.json();
+                    if (data.user) {
+                        // 显示用户信息，例如用户名
+                        document.getElementById('userInfo').innerHTML = `
+                        <span>欢迎，${data.user.username}</span>
+                        <button onclick="handleLogout()">注销</button>
+                        `;
+                        window.userLoggedIn = true;
+                        window.userVideoFavorites = data.user.videoFavorites || {};
+                    }
+                    else window.userLoggedIn = false;
+                }
+                else window.userLoggedIn = false;
+            } catch (err) {
+                console.error('获取用户信息失败', err);
+                window.userLoggedIn = false;
+            }
+            await loadHistoryButton();
+            await loadSeriesInfoData(); // 加载系列信息
+            await initApp(0, 1); // 默认不播放视频，刷新视频列表
+        });
+
+        // 用户注销处理函数，根据后端实现作调整
+        async function handleLogout() {
+            try {
+                const res = await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' });
+                if (res.ok) {
+                location.reload();
+                }
+            } catch (error) {
+                console.error('退出登录失败:', error);
+            }
+        }
+
+        async function loadSpecificVideo(videoId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/videos/${videoId}`); //console.log(response);
+                if (!response.ok) throw new Error(`HTTP错误 ${response.status}`);
+                const targetVideo = await response.json();  
+                
+                if (targetVideo) {
+                    document.querySelectorAll('.video-item').forEach(i => i.classList.remove('active'));
+                    switchVideo(targetVideo, 0);
+                    // 找到对应的视频项并添加 active 类
+                    const videoItem = document.querySelector(`.video-item[data-video-id="${videoId}"]`);
+                    if (videoItem) {
+                        videoItem.classList.add('active');
+                        // 如有需要，确保该项可见
+                        videoItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            } catch (error) {
+                console.error('初始化失败:', error);
+                videoList.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+            }
+        }
+
+        function copyVideoLink(videoId, displayName, video_series) {
+            event.stopPropagation();
+            
+            // 生成SEO友好格式的显示名（替换空格和特殊字符）
+            const seoName = displayName
+                //.toLowerCase()
+                .replace(/\s+/g, '-')         // 空格转连字符
+                .replace(/[^\w\u4e00-\u9fa5-]/g, '') // 允许中文、字母、数字、下划线和连字符
+                .replace(/--+/g, '-');        // 移除重复连字符
+
+            // 构建带显示名的URL
+            const url = `${video_series} ${seoName}   ${window.location.origin}/videos/${videoId}`;
+            
+            // 复制到剪贴板逻辑保持不变
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url)
+                    .then(() => showCopySuccess())
+                    .catch(() => fallbackCopyText(url));
+            } else {
+                fallbackCopyText(url);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            // 创建临时文本域
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed'; // 避免滚动跳转
+            document.body.appendChild(textArea);
+            textArea.select();
+
+            try {
+                // 执行复制命令
+                const success = document.execCommand('copy');
+                if (success) {
+                showCopySuccess();
+                } else {
+                showCopyError();
+                }
+            } catch (err) {
+                showCopyError();
+            }
+
+            // 清理 DOM
+            document.body.removeChild(textArea);
+        }
+
+        function showCopySuccess() {
+            //alert('链接已复制到剪贴板！');
+        }
+
+        function showCopyError() {
+            alert('无法自动复制，请手动选择链接后按 Ctrl+C 复制。');
+        }
+    
+    function processVideos(videos) {
+        // 使用 Map 保存系列，每个系列内再用 Map 保存子系列
+        const seriesMap = new Map();
+        
+        // 将子系列中的视频先按 order 排序（若存在），否则按 displayName 排序
+        videos.sort((a, b) => {
+            const orderA = (typeof a.order === 'number') ? a.order : Number.MAX_SAFE_INTEGER;
+            const orderB = (typeof b.order === 'number') ? b.order : Number.MAX_SAFE_INTEGER;
+            if(orderA !== Number.MAX_SAFE_INTEGER || orderB !== Number.MAX_SAFE_INTEGER){
+                return orderA - orderB;
+            }
+            return a.displayName.localeCompare(b.displayName, 'zh-CN', { numeric: true });
+        });
+
+        videos.forEach(video => {
+            // 取后端返回的 series 字段，否则从 filename 中拆分系列名
+            const seriesKey = video.series || video.filename.split('/')[0];
+            // 如果当前视频没有 subSeries，则归为“默认子系列”
+            const subSeriesKey = video.subSeries || "默认子系列";
+            
+            if (!seriesMap.has(seriesKey)) {
+                seriesMap.set(seriesKey, {
+                    name: seriesKey,
+                    displayName: `${Series_Name[seriesKey] || seriesKey}`,
+                    // 用 Map 存储该系列下的子系列
+                    subseriesMap: new Map()
+                });
+            }
+            const seriesObj = seriesMap.get(seriesKey);
+            if (!seriesObj.subseriesMap.has(subSeriesKey)) {
+                seriesObj.subseriesMap.set(subSeriesKey, {
+                    name: subSeriesKey,
+                    // 数组存储属于该子系列的所有视频项
+                    videos: []
+                });
+            }
+            seriesObj.subseriesMap.get(subSeriesKey).videos.push(video);
+        });
+        
+        return seriesMap;
+    }
+
+    function getSortedSeries(seriesMap) {
+    const seriesArray = Array.from(seriesMap.values());
+    seriesArray.sort((a, b) => {
+        const orderA = seriesOrder[a.name] || Number.MAX_SAFE_INTEGER;
+        const orderB = seriesOrder[b.name] || Number.MAX_SAFE_INTEGER;
+        return orderA - orderB;
+    });
+    return seriesArray;
+    }
+
+    // 渲染系列导航栏
+    function renderSeriesNavigation(seriesMap) {
+        const navContainer = document.getElementById('seriesNav');
+        navContainer.innerHTML = '';
+        
+        const sortedSeries = getSortedSeries(seriesMap);
+        sortedSeries.forEach(series => {
+            if (seriesinvisible[series.displayName]) return; // 如果没有显示名称，则跳过
+            const button = document.createElement('button');
+            button.textContent = series.displayName;
+            button.onclick = () => scrollToSeries(series.name);
+            navContainer.appendChild(button);
+        });
+    }
+
+    let draggedSub = null;
+
+    function onSubDragStart(e) {
+        e.stopPropagation(); // 阻止事件冒泡给父级触发背景高光
+        draggedSub = e.currentTarget;
+        e.dataTransfer.effectAllowed = "move";
+        // 为子系列设置特定的拖拽数据
+        e.dataTransfer.setData('application/json', JSON.stringify({
+            type: 'subseries',
+            subseries: draggedSub.dataset.subseriesName
+        }));
+        draggedSub.classList.add('dragging');
+
+        // 创建自定义预览
+        let dragPreview;
+        // 如果子系列已折叠，使用子系列 header 部分作为拖拽预览
+        if (draggedSub.classList.contains('collapsed')) {
+            const header = draggedSub.querySelector('.subseries-header');
+            if (header) {
+                dragPreview = header.cloneNode(true);
+                // 设置预览尺寸为 header 的尺寸
+                dragPreview.style.width = draggedSub.offsetWidth + "px";
+                dragPreview.style.height = header.offsetHeight + "px";
+            }
+        }
+        // 如果未折叠或没有 header，则完整克隆整个
+        if (!dragPreview) {
+            dragPreview = draggedSub.cloneNode(true);
+        }
+        // 隐藏预览元素
+        dragPreview.style.position = 'absolute';
+        dragPreview.style.top = '-9999px';
+        document.body.appendChild(dragPreview);
+        // 设置自定义拖拽预览，偏移量可以根据需要调整
+        e.dataTransfer.setDragImage(dragPreview, 0, 0);
+    }
+
+    function onSubDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move"; 
+    }
+
+    function onSubDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // 移除目标容器的高亮样式
+        e.currentTarget.classList.remove('drag-over');
+
+        const target = e.currentTarget;
+        if (draggedSub === target) return;
+
+        // 保存 draggedSub 到局部变量，防止后续拖拽结束事件清除它
+        const draggedNode = draggedSub;
+        if (!draggedNode || !(draggedNode instanceof Node)) {
+            console.error("拖拽节点无效");
+            return;
+        }
+
+        const parent = target.parentNode; // 父容器为同一系列内的所有子系列
+        const mouseY = e.clientY;
+        const targetRect = target.getBoundingClientRect();
+        if (mouseY < targetRect.top + targetRect.height / 2) {
+            parent.insertBefore(draggedSub, target);
+        } else {
+            parent.insertBefore(draggedSub, target.nextSibling);
+        }
+        // 更新顺序
+        updateSubseriesOrder(parent);
+    }
+
+    function onSubDragEnd(e) {
+        e.stopPropagation();
+        // 同时清除拖拽目标和所有容器的高亮样式
+        document.querySelectorAll('.drag-over').forEach(elem => elem.classList.remove('drag-over'));
+        e.currentTarget.classList.remove('dragging');
+        draggedSub = null;
+    }
+
+    // 收集同系列下子系列的新顺序，并调用后端接口更新
+    function updateSubseriesOrder(parent) {
+        const newOrder = [];
+        // 选取子系列容器内所有 .subseries-group 元素
+        const subElems = parent.querySelectorAll('.subseries-group');
+        subElems.forEach(elem => {
+            newOrder.push(elem.dataset.subseriesName);
+        });
+        console.log("新的子系列顺序：", newOrder);
+        // 调用后端 API 更新：需要后端新增一个接口 /api/subseries/order
+        fetch(`${API_BASE}/api/subseries/order`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                series: parent.closest('.series-group').dataset.seriesName,
+                order: newOrder
+            })
+        }).then(res => {
+            if (!res.ok) console.error("更新子系列顺序失败");
+        }).catch(err => console.error("更新子系列顺序异常", err));
+    }
+
+    // 渲染系列分组
+    // 在渲染系列分组函数中处理子系列排序
+    function renderSeriesGroups(seriesMap) {
+        const groupsContainer = document.getElementById('seriesGroups');
+        groupsContainer.innerHTML = '';
+        const seriesArray = getSortedSeries(seriesMap);
+        seriesArray.forEach(series => {
+            const seriesDiv = document.createElement('div');
+            seriesDiv.className = 'series-group';
+            seriesDiv.id = `series-${series.name}`;
+            seriesDiv.dataset.seriesName = series.name;
+
+            // 根据 localStorage 恢复系列折叠状态
+            if(localStorage.getItem(`series-${series.name}-collapsed`) === "true") {
+                seriesDiv.classList.add('collapsed');
+            }
+            
+            // 使用统一的拖放绑定函数，拖放到系列区域默认移动到“默认子系列”
+            addDropEventHandlers(seriesDiv, async (e) => {
+                e.stopPropagation(); // 阻止事件进一步冒泡到父级系列容器
+                try {
+                    const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                    await moveVideoToSubseriesId(data.id, series.name, "默认子系列");
+                    await initApp(0, 0);
+                } catch (err) {
+                    console.error('拖动视频移动失败:', err);
+                }
+            });
+            
+            // 系列头部（点击折叠展开）
+            const seriesHeader = document.createElement('div');
+            seriesHeader.className = 'series-header';
+            seriesHeader.innerHTML = `
+                <div class="series-title">${series.displayName}</div>
+                <div class="collapse-icon">▼</div>
+            `;
+            seriesHeader.addEventListener('click', () => {
+                seriesDiv.classList.toggle('collapsed');
+                localStorage.setItem(`series-${series.name}-collapsed`, seriesDiv.classList.contains('collapsed'));
+            });
+            seriesDiv.appendChild(seriesHeader);
+            
+            const seriesContent = document.createElement('div');
+            seriesContent.className = 'series-content';
+            // 如果存在子系列，则对子系列排序后渲染
+            if (series.subseriesMap) {
+                // 先将 Map 转换为数组
+                let subseriesArray = Array.from(series.subseriesMap.values());
+
+                // 尝试获取当前系列保存的子系列顺序
+                const savedOrder = seriesInfoData[series.name] && Array.isArray(seriesInfoData[series.name].subseriesOrder)
+                                ? seriesInfoData[series.name].subseriesOrder
+                                : null;
+
+                if (savedOrder) {
+                    // 按照保存的顺序排序，如果某一项不在 savedOrder 中，则按名称排序放在后面
+                    subseriesArray.sort((a, b) => {
+                        const indexA = savedOrder.indexOf(a.name);
+                        const indexB = savedOrder.indexOf(b.name);
+                        if (indexA !== -1 && indexB !== -1) {
+                            return indexA - indexB;
+                        } else if (indexA !== -1) {
+                            return -1;
+                        } else if (indexB !== -1) {
+                            return 1;
+                        }
+                        return a.name.localeCompare(b.name, 'zh-CN', { numeric: true });
+                    });
+                } else {
+                    // 当未存在保存顺序时，默认按照名称排序，并将 "默认子系列" 放到最后
+                    subseriesArray.sort((a, b) => {
+                        const defaultName = "默认子系列";
+                        if (a.name === defaultName && b.name !== defaultName) return 1;
+                        if (b.name === defaultName && a.name !== defaultName) return -1;
+                        return a.name.localeCompare(b.name, 'zh-CN', { numeric: true });
+                    });
+                }
+                subseriesArray.forEach(sub => {
+                const subDiv = document.createElement('div');
+                subDiv.className = 'subseries-group';
+                subDiv.dataset.subseriesName = sub.name;
+
+                // 设置子系列可拖动并绑定拖拽事件
+                subDiv.draggable = true;
+                subDiv.addEventListener('dragstart', onSubDragStart);
+                subDiv.addEventListener('dragover', onSubDragOver);
+                subDiv.addEventListener('drop', onSubDrop);
+                subDiv.addEventListener('dragend', onSubDragEnd);
+                // 根据 localStorage 恢复子系列折叠状态
+                if(localStorage.getItem(`subseries-${series.name}-${sub.name}-collapsed`) === "true") {
+                    subDiv.classList.add('collapsed');
+                }
+                
+                // 绑定子系列拖放事件（原有代码保留，如移动到此子系列）
+                addDropEventHandlers(subDiv, async (e) => {
+                    e.stopPropagation();
+                    try {
+                        const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                        await moveVideoToSubseriesId(data.id, series.name, sub.name);
+                        await initApp(0, 0);
+                    } catch (err) {
+                        console.error('拖动视频移动失败:', err);
+                    }
+                });
+
+                const subHeader = document.createElement('div');
+                subHeader.className = 'subseries-header';
+                subHeader.innerHTML = `<div class="subseries-title">${sub.name}</div>`;
+                subHeader.addEventListener('click', () => {
+                    subDiv.classList.toggle('collapsed');
+                    localStorage.setItem(`subseries-${series.name}-${sub.name}-collapsed`, subDiv.classList.contains('collapsed'));
+                });
+                subDiv.appendChild(subHeader);
+                
+                const subVideoContainer = document.createElement('div');
+                subVideoContainer.className = 'video-items';
+                subVideoContainer.dataset.subseriesName = sub.name; // 新增此行
+                sub.videos.forEach(video => {
+                    subVideoContainer.appendChild(createVideoItem(video));
+                });
+                subDiv.appendChild(subVideoContainer);
+                seriesContent.appendChild(subDiv);
+            });
+            }
+            else if (series.videos) {
+                const videoContainer = document.createElement('div');
+                videoContainer.className = 'video-items';
+                series.videos.forEach(video => {
+                    videoContainer.appendChild(createVideoItem(video));
+                });
+                seriesContent.appendChild(videoContainer);
+            }
+            seriesDiv.appendChild(seriesContent);
+            groupsContainer.appendChild(seriesDiv);
+        });
+        enableVideoReorder();
+    }
+
+    async function moveVideoToSubseriesId(videoId, targetSeries, targetSubseries) {
+        try {
+            const res = await fetch(`${API_BASE}/api/videos/${videoId}/move`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    series: targetSeries,
+                    subSeries: targetSubseries
+                })
+            });
+            if (!res.ok) {
+            throw new Error('移动请求失败');
+            }
+        } catch (err) {
+            console.error('移动视频接口调用失败:', err);
+            throw err;
+        }
+    }
+
+    function highlightSeries(e) {
+        e.currentTarget.style.backgroundColor = '#404040';
+    }
+
+    // 取消高亮
+    function unhighlightSeries(e) {
+        e.currentTarget.style.backgroundColor = '';
+    }
+
+        // 渲染视频列表
+    function createVideoItem(video) {
+        const item = document.createElement('div');
+        item.className = 'video-item';
+        item.dataset.videoId = video.id; // 添加数据属性
+        // 保存完整信息，便于后续判断所属子系列
+        item.setAttribute('data-info', JSON.stringify({
+            id: video.id,
+            series: video.series,
+            subSeries: video.subSeries || "默认子系列"
+        }));
+        item.draggable = true; // 开启拖拽
+
+        item.innerHTML = `
+            <span></span>
+            <div class="video-info">
+                <div>${video.displayName}</div>
+                <div class="meta-info">
+                    <small>${video.filename.split('.').pop().toUpperCase()}</small>
+                    <span class="play-count" data-video-id="${video.id}">
+                        播放：${video.playCount || 0}
+                    </span>
+                </div>
+            </div>
+            <button class="move-btn" title="移动到子系列"></button>
+        `;
+
+        // 创建收藏按钮（using favorite-star CSS）
+        const favoriteBtn = document.createElement('button');
+        favoriteBtn.className = 'favorite-star';
+        // 判断当前视频是否已收藏，设置初始样式
+        if (isVideoFavorite(video.id)) {
+            favoriteBtn.classList.add('favorited');
+        }
+        favoriteBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const current = isVideoFavorite(video.id);
+            const newState = !current;
+            if (newState) {
+                favoriteBtn.classList.add('favorited');
+            } else {
+                favoriteBtn.classList.remove('favorited');
+            }
+            await updateVideoFavorite(video.id, newState);
+        });
+
+        // 将收藏图标插入到 move-btn 按钮的前面
+        const moveBtn = item.querySelector('.move-btn');
+        item.insertBefore(favoriteBtn, moveBtn);
+
+        // 新增：添加右上角高亮标签
+        const highlightTag = document.createElement('div');
+        highlightTag.className = 'highlight-tag';
+
+        // 点击标签时切换状态并保存到后端
+        highlightTag.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await toggleVideoHighlight(video.id, highlightTag);
+        });
+
+        item.appendChild(highlightTag);
+        
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.video-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            switchVideo(video, 1);
+        });
+
+        // 添加拖拽事件
+        item.addEventListener('dragstart', (e) => {
+            e.stopPropagation(); // 防止冒泡到子系列拖拽
+            // 将视频信息保存到 dataTransfer 中（可以只传 id，后续刷新列表后根据 id 查找）
+            e.dataTransfer.setData('application/json', JSON.stringify({
+                id: video.id,
+                series: video.series,
+                subSeries: video.subSeries
+            }));
+            item.classList.add('dragging');
+
+            //e.dataTransfer.setDragImage(new Image(), 0, 0);
+        });
+
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+        });
+
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'share-btn';
+        shareBtn.innerHTML = '🔗';
+        shareBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // 阻止冒泡
+            copyVideoLink(video.id, video.displayName, video.series);
+        });
+        item.appendChild(shareBtn);
+        
+        // 移动按钮：点击后显示子系列选择菜单
+        moveBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const series = video.series;
+            // 获取当前系列已有的子系列
+            let res = await fetch(`${API_BASE}/api/subseries?series=${encodeURIComponent(series)}`);
+            let data = await res.json();
+            let availableSubseries = data.subSeries || [];
+            // 显示选择菜单（传入鼠标事件对象用于定位菜单）
+            showSubseriesMenu(e, video, availableSubseries);
+        });
+        
+        return item;
+    }
+
+    // 判断当前视频是否已收藏，已登录状态使用服务器返回的数据，否则从 localStorage 读取
+    function isVideoFavorite(videoId) {
+        if (window.userLoggedIn) {
+            return window.userVideoFavorites && window.userVideoFavorites[videoId];
+        } else {
+            const localFavs = JSON.parse(localStorage.getItem('favoriteVideos') || '{}');
+            return localFavs[videoId] === true;
+        }
+    }
+
+    // 更新视频收藏状态，已登录调用服务器接口，否则写入 localStorage
+    async function updateVideoFavorite(videoId, state) {
+        //console.log(window.userLoggedIn, state);
+        if (window.userLoggedIn) {
+            try {
+                const res = await fetch(`${API_BASE}/api/favorites/video`, {
+                    method: 'POST',
+                    credentials: 'include', // 确保携带 Cookie
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ videoId, favorited: state })
+                });
+                if (!res.ok) throw new Error("更新收藏状态失败");
+                // 更新全局变量
+                window.userVideoFavorites = window.userVideoFavorites || {};
+                window.userVideoFavorites[videoId] = state;
+            } catch (err) {
+                console.error("更新视频收藏失败:", err);
+            }
+        } else {
+            const localFavs = JSON.parse(localStorage.getItem('favoriteVideos') || '{}');
+            localFavs[videoId] = state;
+            localStorage.setItem('favoriteVideos', JSON.stringify(localFavs));
+        }
+    }
+
+    // 切换视频项高亮状态并保存到后端
+    async function toggleVideoHighlight(videoId, element) {
+        // 判断当前状态：不透明表示选中
+        const current = !(element.style.backgroundColor === 'transparent');
+        const newState = !current;
+        element.style.backgroundColor = newState ? '#ffde33' : 'transparent';
+
+        if (newState) {
+            element.classList.add('active');
+        } else {
+            element.classList.remove('active');
+        }
+        
+        try {
+            const res = await fetch(`${API_BASE}/api/video-highlight`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ videoId, highlighted: newState })
+            });
+            if (!res.ok) {
+                throw new Error("保存高亮状态失败");
+            }
+        } catch (error) {
+            console.error("保存视频高亮状态出错:", error);
+            // 如果失败，可回退UI状态
+            element.style.backgroundColor = current ? '#ffde33' : 'transparent';
+        }
+    }
+
+    // 加载所有视频高亮状态数据，并更新每个视频项的标签
+    async function loadVideoHighlights() {
+        try {
+            const res = await fetch(`${API_BASE}/api/video-highlight`);
+            if (!res.ok) throw new Error("加载高亮状态失败");
+            const highlights = await res.json(); // 形如 { videoId1: true, videoId2: false, ... }
+            document.querySelectorAll('.video-item').forEach(item => {
+                const vid = item.dataset.videoId;
+                const tag = item.querySelector('.highlight-tag');
+                if (tag) {
+                    tag.style.backgroundColor = highlights[vid] ? '#ffde33' : 'transparent';
+                }
+            });
+        } catch (err) {
+            console.error("加载视频高亮状态失败:", err);
+        }
+    }
+
+    // ② 新增：处理子系列容器 drop 事件，支持跨子系列拖拽后直接固定目标位置
+    async function handleseriesitemDrop(e, container) {
+        e.preventDefault();
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            // 注意：第三个参数改为targetSubSeries
+            const seriesContainer = container.closest('.series-group');
+            if (!seriesContainer) {draggedItem = null; return;}
+            const series = seriesContainer.dataset.seriesName;
+            const targetSubSeries = container.dataset.subseriesName;
+            draggedItem = null;
+            await handleSeriesDrop(e, series, targetSubSeries);
+            return;
+        }
+
+            const dataStr = e.dataTransfer.getData('application/json');
+        if (!dataStr) {
+            console.error("拖动视频移动失败: 拖拽数据为空");
+            return;
+        }
+        let data;
+        try {
+            data = JSON.parse(dataStr);
+        } catch(err) {
+            console.error("解析拖拽数据失败:", err);
+            return;
+        }
+        // 如果数据类型为子系列，则忽略，避免误作视频处理
+        if (data.type && data.type === 'subseries') {
+            console.log("检测到子系列拖拽，忽略视频拖拽处理");
+            return;
+        }
+
+        if (!draggedItem) return;
+        const currentDraggedItem = draggedItem;
+        const seriesContainer = container.closest('.series-group');
+        if (!seriesContainer) return;
+        const series = seriesContainer.dataset.seriesName;
+        const targetSubSeries = container.dataset.subseriesName;
+
+        // 计算插入位置：使用每项中点判断
+        const children = Array.from(container.querySelectorAll('.video-item:not(.dragging)'));
+        let dropIndex = children.length;
+        for (let i = 0; i < children.length; i++) {
+            const rect = children[i].getBoundingClientRect();
+            const midPoint = rect.top + rect.height / 2;
+            if (e.clientY < midPoint) {
+                dropIndex = i;
+                break;
+            }
+        }
+        
+        // 从原容器移除并插入到目标位置
+        const originContainer = currentDraggedItem.parentElement;
+        if (originContainer) originContainer.removeChild(currentDraggedItem);
+        
+        if (dropIndex >= children.length) container.appendChild(currentDraggedItem);
+            else container.insertBefore(currentDraggedItem, children[dropIndex]);
+        console.log(dropIndex, children.length, currentDraggedItem, children[dropIndex]);
+
+        // 延迟更新顺序，等待浏览器重排完成后再操作
+        requestAnimationFrame(async () => {
+            // 重新以 DOM 顺序构造 order 数组（仅针对目标子系列）
+            const newOrder = [];
+            container.querySelectorAll('.video-item').forEach((item, index) => {
+                newOrder.push(item.dataset.videoId);
+                item.dataset.order = index;
+            });
+            console.log('新排序数组：', newOrder);
+            
+            // 解析拖拽项自身的数据
+            const dragData = JSON.parse(currentDraggedItem.getAttribute('data-info') || '{}');
+            
+            // 如果拖拽项所属子系列改变，则先调用移动接口
+            try {
+                const moveRes = await fetch(`${API_BASE}/api/videos/${dragData.id}/move`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ series, subSeries: targetSubSeries })
+                });
+                if (!moveRes.ok) {
+                    console.error('移动视频接口调用失败');
+                } else {
+                    // 更新本地数据中的子系列后，再更新顺序
+                    dragData.subSeries = targetSubSeries;
+                    currentDraggedItem.setAttribute('data-info', JSON.stringify(dragData));
+                }
+            } catch (err) {
+                console.error('移动视频请求出错:', err);
+            }
+
+            // 从原容器移除并插入到目标位置
+            // if (dropIndex >= children.length) container.appendChild(currentDraggedItem);
+            //     else container.insertBefore(currentDraggedItem, children[dropIndex]);
+            // console.log(dropIndex, children.length, currentDraggedItem, children[dropIndex]);
+                
+            // 统一调用更新顺序接口（无论是否跨子系列）
+            try {
+                const res = await fetch(`${API_BASE}/api/videos/order`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ series, subSeries: targetSubSeries, order: newOrder })
+                });
+                if (!res.ok) {
+                    console.error('更新视频排序失败');
+                }
+            } catch (error) {
+                console.error('更新视频排序请求出错:', error);
+            }
+            
+            
+            // if (dropIndex >= children.length) container.appendChild(currentDraggedItem);
+            //     else container.insertBefore(currentDraggedItem, children[dropIndex]);
+            // console.log(dropIndex, children.length, currentDraggedItem, children[dropIndex]);
+
+            initApp(0, 0); // 刷新视频列表
+            
+            draggedItem = null;
+        });
+    }
+
+    async function handleSeriesDrop(e, seriesId, subseriesId) {
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (files.length === 0) return;
+
+        // 显示上传状态
+        showUploadStatus(dropZone, {
+            type: 'uploading',
+            message: '0%'
+        });
+
+        // 构造多个上传请求
+        const uploadPromises = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const formData = new FormData();
+            formData.append('video', file);
+            formData.append('series', seriesId); // 添加系列参数
+            formData.append('subSeries', subseriesId); // 添加系列参数
+            console.log("上传文件：", file, seriesId, subseriesId);
+            uploadPromises.push(uploadFile(formData)); // 调用上传函数
+        }
+
+        try {
+            // 同时等待所有文件上传完成
+            const responses = await Promise.all(uploadPromises);
+            console.log("所有文件上传成功", responses);
+
+            // 上传成功后刷新列表
+            await initApp(0, 0);
+
+            // 显示成功状态
+            showUploadStatus(dropZone, {
+                type: 'success',
+                message: `上传成功 ${files.length} 个文件`
+            });
+        } catch (error) {
+            console.error('上传失败:', error);
+
+            // 显示失败状态
+            showUploadStatus(dropZone, {
+                type: 'error',
+                message: '上传失败'
+            });
+        }
+
+        // 3秒后恢复默认状态
+        setTimeout(() => {
+            resetDropZone(dropZone);
+        }, 5000);
+    }
+
+    // 显示子系列选择菜单
+    function showSubseriesMenu(e, video, availableSubseries) {
+        // 如果菜单已经存在，先清除
+        const existingMenu = document.querySelector('.subseries-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+        
+        // 创建菜单容器
+        const menu = document.createElement('div');
+        menu.className = 'subseries-menu';
+        // 简单样式，可根据需要调整
+        menu.style.position = 'absolute';
+        menu.style.background = '#333';
+        menu.style.border = '1px solid #666';
+        menu.style.padding = '5px';
+        menu.style.borderRadius = '4px';
+        menu.style.zIndex = 1000;
+        
+        // 显示子系列选择菜单时，遍历 availableSubseries 数组
+        // availableSubseries.forEach(sub => {
+        //     const option = document.createElement('div');
+        //     option.textContent = sub.name; // 直接显示子系列名称
+        //     option.style.cursor = 'pointer';
+        //     option.style.padding = '2px 5px';
+        //     option.addEventListener('click', async (ev) => {
+        //         ev.stopPropagation();
+        //         await moveVideoToSubseries(video, sub.name);
+        //         menu.remove();
+        //     });
+        //     menu.appendChild(option);
+        // });
+        
+        // 新建子系列选项
+        const newOption = document.createElement('div');
+        newOption.textContent = '新建子系列';
+        newOption.style.cursor = 'pointer';
+        newOption.style.padding = '2px 5px';
+        newOption.style.fontWeight = 'bold';
+        newOption.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            const newSub = prompt("请输入新子系列名称:");
+            if (newSub) {
+                await moveVideoToSubseries(video, newSub);
+            }
+            menu.remove();
+        });
+        menu.appendChild(newOption);
+
+        // 新增重命名选项
+        const renameOption = document.createElement('div');
+        renameOption.textContent = '重命名';
+        renameOption.style.cursor = 'pointer';
+        renameOption.style.padding = '2px 5px';
+        renameOption.style.color = '#f0ad4e'; // 区分颜色
+        renameOption.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            renameVideo(video);
+            menu.remove();
+        });
+        menu.appendChild(renameOption);
+
+        // 增加“修改”按钮
+        const subseriesrenameOption = document.createElement('div');
+        subseriesrenameOption.textContent = '修改子系列名';
+        subseriesrenameOption.style.cursor = 'pointer';
+        subseriesrenameOption.style.padding = '2px 5px';
+        subseriesrenameOption.style.color = '#f0adff'; // 区分颜色
+        subseriesrenameOption.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            const newName = prompt("请输入新的子系列名称:", video.subSeries);
+            if (newName && newName.trim() !== '' && newName.trim() !== video.subSeries) {
+                // 调用重命名子系列接口，传入当前 video's 系列和子系列名
+                await renameSubseries(video.series, video.subSeries, newName.trim());
+                await initApp(0, 0);
+            }
+            menu.remove();
+        });
+        menu.appendChild(subseriesrenameOption);
+
+        // 新增重命名系列选项
+        const seriesrenameOption = document.createElement('div');
+        seriesrenameOption.textContent = '修改视频系列名';
+        seriesrenameOption.style.cursor = 'pointer';
+        seriesrenameOption.style.padding = '2px 5px';
+        seriesrenameOption.style.color = '#e0bd00'; // 区分颜色
+        seriesrenameOption.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            seriesrename(video);
+            menu.remove();
+        });
+        menu.appendChild(seriesrenameOption);
+        
+        // 增加删除视频选项
+        const deleteOption = document.createElement('div');
+        deleteOption.textContent = '删除视频';
+        deleteOption.style.cursor = 'pointer';
+        deleteOption.style.padding = '2px 5px';
+        deleteOption.style.color = '#ff4757'; // 红色警示
+        deleteOption.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            if (confirm("确定删除该视频吗？")) {
+                await deleteVideo(video);
+            }
+            menu.remove();
+        });
+        menu.appendChild(deleteOption);
+
+        // 新建系列选项
+        const movetootherOption = document.createElement('div');
+        movetootherOption.textContent = '移动到杂项';
+        movetootherOption.style.cursor = 'pointer';
+        movetootherOption.style.padding = '2px 5px';
+        movetootherOption.style.color = '#b0ff00'; // 区分颜色
+        movetootherOption.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            await moveVideoToseries(video, '杂项', 1000, false);
+            menu.remove();
+        });
+        menu.appendChild(movetootherOption);
+
+
+        // 新建系列选项
+        const movetoseriesOption = document.createElement('div');
+        movetoseriesOption.textContent = '移动到新系列';
+        movetoseriesOption.style.cursor = 'pointer';
+        movetoseriesOption.style.padding = '2px 5px';
+        movetoseriesOption.style.color = '#f0f000'; // 区分颜色
+        movetoseriesOption.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            const newSeries = prompt("请输入新子系列名称:");
+            let visib = prompt("系列是否需要导航按钮？(yes/no):");
+            const order = parseInt(prompt(`输入系列优先级,目前优先级如下：${JSON.stringify(seriesOrder)}`));
+            if(visib == 'yes') visib = true;
+            else visib = false;
+            if (newSeries) {
+                await moveVideoToseries(video, newSeries, order, visib);
+            }
+            menu.remove();
+        });
+        menu.appendChild(movetoseriesOption);
+
+        // 新增：换源按钮
+        const changeSourceOption = document.createElement('div');
+        changeSourceOption.textContent = '换源';
+        changeSourceOption.style.cursor = 'pointer';
+        changeSourceOption.style.padding = '2px 5px';
+        changeSourceOption.style.color = '#00ff00'; // 可根据需要调整颜色
+        changeSourceOption.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            // 创建一个隐藏的文件 input
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'video/*';
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+            
+            fileInput.addEventListener('change', async () => {
+                const file = fileInput.files[0];
+                if (file) {
+                    // 使用 video.filename.split('/').pop() 作为新文件名
+                    const newFileName = video.filename.split('/').pop();
+
+                    // 先删除旧视频文件，确保不会有重命名问题
+                    try {
+                        await fetch(`${API_BASE}/api/videos/${video.id}`, {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        console.log('旧视频文件删除成功');
+                    } catch (err) {
+                        console.error('删除旧视频文件失败:', err);
+                        // 根据需要，可以决定是否中断换源流程
+                        return;
+                    }
+
+                    // 使用 FormData 上传新文件，同时传递 override 标志和视频标识信息
+                    const formData = new FormData();
+                    formData.append('video', file, newFileName);
+                    // 传递系列信息（可能用于决定存储目录）
+                    //console.log("上传时的系列信息：", video.series);
+                    formData.append('series', video.series);
+                    formData.append('subSeries', video.subSeries);
+                    formData.append('order', video.order);
+                    formData.append('playCount', video.playCount);
+                    //console.log("换源时的系列信息：", file, video, video.order, video.filename.split('/').pop(), video.id);
+                    try {
+                        const res = await uploadFile(formData);
+                        // 假设上传成功后返回 JSON，其中包含新的 URL
+                        // const data = res;  // 假设 uploadFile 返回解析后的响应 JSON
+                        // video.url = data.video.url || video.url;
+                        // // 如果当前正在播放该视频，则更新视频源
+                        // if (currentVideo && currentVideo.id === video.id) {
+                        //     const videoEl = document.getElementById('myVideo');
+                        //     videoEl.src = video.url;
+                        //     videoEl.load();
+                        // }
+
+                        // 获取当前被选中视频项
+                        const container = e.target.closest('.video-items');
+                        
+                        // 重新以 DOM 顺序构造 order 数组（仅针对目标子系列）
+                        const newOrder = [];
+                        container.querySelectorAll('.video-item').forEach((item, index) => {
+                            newOrder.push(item.dataset.videoId);
+                            item.dataset.order = index;
+                        });
+                        //console.log('新排序：', newOrder);
+                        
+                        // 统一调用更新顺序接口（无论是否跨子系列）
+                        try {
+                            const series = video.series;
+                            const targetSubSeries = video.subSeries;
+                            const res = await fetch(`${API_BASE}/api/videos/order`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ series, subSeries: targetSubSeries, order: newOrder })
+                            });
+                            if (!res.ok) {
+                                console.error('更新视频排序失败');
+                            }
+                        } catch (error) {
+                            console.error('更新视频排序请求出错:', error);
+                        }
+
+                        // 上传成功后刷新列表
+                        await initApp(0, 0);
+                        // 显示成功状态
+                        showUploadStatus(dropZone, {
+                            type: 'success',
+                            message: `上传成功`,
+                            filename: file.name,
+                            size: file.size
+                        });
+                        // 3秒后恢复默认状态
+                        setTimeout(() => {
+                            resetDropZone(dropZone);
+                        }, 5000);
+                    } catch (error) {
+                        console.error('换源失败:', error);
+                        alert('换源失败');
+                    } finally {
+                        fileInput.remove();
+                    }
+                }
+            });
+            
+            fileInput.click();
+            menu.remove();
+        });
+        menu.appendChild(changeSourceOption);
+        
+        // 定位菜单到鼠标点击处
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
+        
+        document.body.appendChild(menu);
+
+        // 获取菜单尺寸和视口边界
+        const menuRect = menu.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // 若菜单超出右侧，则向左调整
+        if(menuRect.right > viewportWidth) {
+        const newLeft = viewportWidth - menuRect.width - 5; // 留10px边距
+            menu.style.left = newLeft + 'px';
+        }
+        // console.log(menuRect.bottom, viewportHeight, menu.style.right);
+        // 若菜单超出底部，则向上调整
+        if(menuRect.bottom > viewportHeight) {
+        const newTop = viewportHeight - menuRect.height - 5; // 留10px边距
+            menu.style.top = newTop + 'px';
+            menu.style.left = e.pageX + 5 + 'px';
+        }
+        
+        // 点击页面其他区域时关闭菜单
+        document.addEventListener('click', function onDocClick() {
+            menu.remove();
+            document.removeEventListener('click', onDocClick);
+        });
+    }
+
+    // 修改前端的 renameVideo 函数
+    async function renameVideo(video) {
+        const newName = prompt("请输入新的视频名称:", video.displayName);
+        if (!newName || newName.trim() === '') {
+            return;
+        }
+        try {
+            const res = await fetch(`${API_BASE}/api/videos/${video.id}/renameFile`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newFileName: newName.trim() })  // 改为 newFileName
+            });
+            if (!res.ok) {
+                alert("重命名失败");
+            } else {
+                const data = await res.json(); // 获取后端返回的数据
+                //alert("重命名成功");
+                // 更新界面显示
+                video.displayName = newName.trim();
+                video.filename = data.video.filename;  // 后端返回更新后的 filename
+                // 更新 video.url（根据 filename 和 series 生成正确的 URL）
+                video.url = `${API_BASE}/videos/${video.series}/${video.filename.split('/').pop()}`;
+                console.log(video.url);
+                // 如果当前正在播放该视频，则更新 video 元素的 src 并重新加载
+                if (currentVideo && currentVideo.id === video.id) {
+                    const videoEl = document.getElementById('myVideo');
+                    videoEl.src = video.url;
+                    videoEl.load();
+                }
+                const videoInfo = document.querySelector(`.video-item[data-video-id="${video.id}"] .video-info > div`);
+                if (videoInfo) {
+                    videoInfo.textContent = newName.trim();
+                }
+            }
+        } catch (error) {
+            console.error("重命名出错:", error);
+            alert("重命名时发生错误");
+        }
+    }
+
+    async function renameSubseries(series, oldSub, newSub) {
+        try {
+            const res = await fetch(`${API_BASE}/api/subseries/rename`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ series, oldSub, newSub })
+            });
+            if (!res.ok) {
+                const errData = await res.json();
+                alert('修改子系列名称失败：' + (errData.error || res.statusText));
+            }
+        } catch (error) {
+            console.error('修改子系列名称请求出错:', error);
+            alert('修改子系列名称请求出错');
+        }
+    }
+
+    async function seriesrename(video) {
+        const newName = prompt("请输入新的视频系列名称:", video.series);
+        if (!newName || newName.trim() === '') return;
+        try {
+            const response = await fetch(`${API_BASE}/api/series/rename`, {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                oldName: video.series,
+                newName: newName
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                // 更新界面显示
+                await initApp(0, 0);
+                alert('系列名称已更新');
+            } else {
+                alert(result.error || '更新失败');
+            }
+        } catch (err) {
+            alert('操作失败: ' + err.message);
+        }
+    }
+
+    async function deleteVideo(video) {
+        try {
+            const res = await fetch(`${API_BASE}/api/videos/${video.id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (!res.ok) {
+                alert('删除失败');
+                return;
+            }
+            alert('删除成功');
+            // 刷新视频列表
+            await initApp(0, 0);
+        } catch (err) {
+            console.error(err);
+            alert('删除失败');
+        }
+    }
+
+    async function moveVideoToSubseries(video, targetSubseries) {
+        try {
+            const moveRes = await fetch(`${API_BASE}/api/videos/${video.id}/move`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    series: video.series,
+                    subSeries: targetSubseries
+                })
+            });
+            if (!moveRes.ok) {
+                alert('移动失败');
+                return;
+            }
+            //alert('移动成功');
+            // 更新本地 video 对象（供前端显示）
+            video.subSeries = targetSubseries;
+            // 操作成功后刷新视频列表
+            await initApp(0, 0);
+        } catch (error) {
+            console.error(error);
+            alert('移动失败');
+        }
+    }
+
+    async function moveVideoToseries(video, targetseries, order, visib) {
+        try {
+                const moveRes = await fetch(`${API_BASE}/api/series-info`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        series: targetseries,
+                        order: order,
+                        visible: visib
+                    })
+                });
+                if (!moveRes.ok) {
+                    alert('失败');
+                    return;
+                }
+                //alert('移动成功');
+                // 更新本地 video 对象（供前端显示）
+                seriesOrder[targetseries] = order;
+                seriesinvisible[targetseries] = ! visib;
+                //console.log('dsadddddd');
+                try {
+                    const moveRes = await fetch(`${API_BASE}/api/videos/${video.id}/move`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            series: targetseries,
+                            subSeries: video.subSeries
+                        })
+                    });
+                    if (!moveRes.ok) {
+                        alert('移动失败');
+                        return;
+                    }
+                    //alert('移动成功');
+                    // 更新本地 video 对象（供前端显示）
+                    video.series = targetseries;
+                    // 操作成功后刷新视频列表
+                } catch (error) {
+                    console.error(error);
+                    alert('移动失败');
+                }
+                await initApp(0, 0);
+                // 操作成功后刷新视频列表      
+        } catch (error) {
+            console.error(error);
+            alert('移动失败');
+        }
+    }
+
+    async function loadSeriesInfoData(){
+        try {
+            const res = await fetch(`${API_BASE}/api/series-info`, {
+                method: 'GET'
+            });
+            if (!res.ok) {
+                alert('失败');
+                return;
+            }
+            //alert('移动成功');
+            // 更新本地 video 对象（供前端显示）
+            const data = await res.json();
+            window.seriesInfoData = data.seriesInfo;
+            //console.log('4154156', data.seriesInfo);
+            for (const thisseries in seriesInfoData) {
+                //console.log('4154156', thisseries, data.seriesInfo[thisseries]);
+                seriesOrder[thisseries] = seriesInfoData[thisseries].order;
+                seriesinvisible[thisseries] = ! seriesInfoData[thisseries].visible;
+                //console.log('4154156', thisseries, seriesOrder[thisseries], seriesinvisible[thisseries]);
+            }
+            // 操作成功后刷新视频列表
+            await initApp(0, 0);
+        } catch (error) {
+            console.error(error);
+            alert('移动失败');
+        }
+    }
+
+    // 滚动到指定系列
+    function scrollToSeries(seriesName) {
+        const target = document.getElementById(`series-${seriesName}`);
+        if (target) {
+            const nav = document.getElementById('seriesNav');
+            const navHeight = nav.offsetHeight; // 动态获取导航栏高度
+            // 如果目标处于折叠状态则先展开
+            if (target.classList.contains('collapsed')) {
+            target.classList.remove('collapsed');
+            }
+
+            const container = document.querySelector('.video-list');
+            var offset = nav.offsetHeight + 15; // 15px 为安全边距
+            if (window.innerWidth <= 1050) offset -= 300; // 手机端适当调整
+            const targetTop = target.offsetTop - container.offsetTop - offset;
+            
+            container.scrollTo({
+            top: targetTop,
+            behavior: 'smooth'
+            });
+        }
+    }
+
+    // document.addEventListener('DOMContentLoaded', async () => {
+    //     try {
+    //         await initApp(0, 1);
+    //     } catch (error) {
+    //         console.error('应用初始化失败:', error);
+    //         videoList.innerHTML = `<div class="error">初始化失败: ${error.message}</div>`;
+    //     }
+    // });
+
+    // 添加高亮动画
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes highlight {
+            0% { background: transparent; }
+            50% { background: #ffffff10; }
+            100% { background: transparent; }
+        }
+    `;
+    document.head.appendChild(style);
+
+
+    // 新增：记录历史播放数据函数
+    function recordHistory(video) {
+        // 构造当前播放记录：
+        // playbackTime 记录当前播放时间（秒），playedAt 记录当前时间戳
+        const record = {
+            videoId: video.id,
+            //playbackTime: Math.floor(video.currentTime),
+            playedAt: Date.now()
+        };
+        // 保存到本地 localStorage（数据格式为数组）
+        let localHistory = JSON.parse(localStorage.getItem('historyVideos') || '[]');
+        // 若当前视频已有记录，则更新，否则添加
+        const index = localHistory.findIndex(item => item.videoId === video.id);
+        if (index >= 0) {
+            localHistory[index] = record;
+        } else {
+            localHistory.push(record);
+        }
+        localStorage.setItem('historyVideos', JSON.stringify(localHistory));
+        
+        // 若已登录则发送到服务器保存历史播放记录
+        if(window.userLoggedIn){
+            fetch(`${API_BASE}/api/history/video`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(record)
+            }).catch(err => console.error("记录历史播放失败:", err));
+        }
+    }
+
+        // 切换视频功能
+    let currentVideo = null;
+
+    async function switchVideo(selectedVideo, playornot) {
+        
+        const meta = await updateVideoMetaInfo(selectedVideo);
+        // document.getElementById('videoNameLabel').textContent = `${selectedVideo.displayName}`;
+        // if(meta.bitrate <= 40) document.getElementById('videoInfoLabel').textContent = `码率: ${meta.bitrate} Mbps 日期: ${meta.date}`;
+        // else document.getElementById('videoInfoLabel').textContent = `码率: ${meta.bitrate} Mbps(已压缩到40M) 日期: ${meta.date}`;
+        document.getElementById('videoTitle').textContent = `${selectedVideo.displayName}`;
+        document.getElementById('videoMeta').textContent = `${meta.bitrate} Mbps ${meta.date}`;
+        
+        await loadVideoDescription(selectedVideo.id);
+        
+        //console.log(selectedVideo);
+        
+        currentVideo = selectedVideo;
+        const videoElement = document.getElementById('myVideo');
+        videoElement.src = selectedVideo.url;
+        videoElement.load();
+        videoElement.pause();
+        // videoElement.src = selectedVideo.url;
+        if (playornot == 1) {
+            // videoElement.load();
+            try {    
+                await videoElement.play();
+            } catch (error) {
+                console.error('播放失败:', selectedVideo.url);
+            }
+            try {
+                const res = await fetch(`${API_BASE}/api/videos/${selectedVideo.id}/increment-play`, { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    const countSpan = document.querySelector(`.play-count[data-video-id="${selectedVideo.id}"]`);
+                    if (countSpan) {
+                        countSpan.textContent = `播放：${data.playCount}`;
+                    }
+                }
+            } catch (error) {
+                console.error('播放量更新失败:', error);
+            }
+            recordHistory(selectedVideo); // 记录历史播放数据
+        }
+        // 每次切换视频后加载评论
+        await loadComments(selectedVideo.id);
+    }
+
+    async function updateVideoMetaInfo(video) {
+        //console.log(video);
+        const bitrateStr = video.bitrate || "未知";
+        const dateStr = new Date(video.lastModified).toLocaleString();
+        const metaInfo = {
+            displayName: video.displayName,
+            bitrate: bitrateStr,
+            date: dateStr
+        };
+        
+        // const metaLabel = document.getElementById('videoNameLabel');
+        // metaLabel.textContent = `${metaInfo.displayName} | 码率: ${metaInfo.bitrate} | 日期: ${metaInfo.date}`;
+        
+        return metaInfo;
+    }
+
+    async function loadComments(videoId) {
+        try {
+            const response = await fetch(`${API_BASE}/api/comments/${videoId}`);
+            if (response.ok) {
+                const data = await response.json();
+                const commentList = document.getElementById('commentList');
+                commentList.innerHTML = '';
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    div.style.borderBottom = '1px solid #444';
+                    div.style.padding = '5px 0';
+                    div.textContent = comment.content + " (" + new Date(comment.timestamp).toLocaleString() + ")";
+                    commentList.appendChild(div);
+                });
+                document.getElementById('commentCount').textContent = `(${data.comments.length}条评论)`;
+            }
+        } catch (error) {
+            console.error('加载评论失败:', error);
+        }
+    }
+
+    async function submitComment(videoId, content) {
+        try {
+            const response = await fetch(`${API_BASE}/api/comments/${videoId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content })
+            });
+            if (response.ok) {
+                await loadComments(videoId);
+            } else {
+                const err = await response.json();
+                alert(err.error || '提交评论失败');
+            }
+        } catch (error) {
+            console.error('提交评论错误:', error);
+            alert('提交评论时出现错误');
+        }
+    }
+
+    function handleSubmitComment() {
+        if (!currentVideo || !currentVideo.id) {
+            alert("当前无视频播放，无法评论");
+            return;
+        }
+        const textarea = document.getElementById('commentInput');
+        const content = textarea.value.trim();
+        if (!content) {
+            alert("评论内容不能为空");
+            return;
+        }
+        submitComment(currentVideo.id, content);
+        textarea.value = '';
+    }
+
+    // 保持原有播放控制功能
+    function togglePlayPause() {
+        const playPauseButton = document.getElementById('playPauseButton');
+        const iconSpan = playPauseButton.querySelector('.icon');
+        const textSpan = playPauseButton.querySelector('.btn-text');
+        if (video.paused) {
+            console.log(Default_played);
+            if(Default_played){
+                Default_played = 0;
+                fetch(`${API_BASE}/api/videos/${Default_videoId}/increment-play`, { method: 'POST' });
+            }
+            video.play();
+            //iconSpan.style.backgroundImage = "url(https://" + `${LocalHost}` + "/images/pause.ico)";
+            iconSpan.style.backgroundImage = `url("/images/pause.ico")`;
+            textSpan.textContent = "暂停";
+        } else {
+            video.pause();
+            //iconSpan.style.backgroundImage = "url(https://" + `${LocalHost}` + "/images/play.ico)";
+            iconSpan.style.backgroundImage = `url("/images/play.ico")`;
+            textSpan.textContent = "播放";
+        }
+    }
+        // 进度条更新
+        video.addEventListener('timeupdate', () => {
+            const progress = (video.currentTime / video.duration) * 100;
+            progressBar.style.width = `${progress}%`;
+        });
+
+        // 点击跳转
+        /*
+        function seek(e) {
+            const rect = e.target.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            video.currentTime = pos * video.duration;
+        }*/
+
+        function seek(e) {
+        // 确保总是获取进度条容器元素
+        const container = e.currentTarget;
+        const rect = container.getBoundingClientRect();
+        
+        // 计算点击位置（限制在容器范围内）
+        let clickX = e.clientX - rect.left;
+        clickX = Math.max(0, Math.min(clickX, rect.width));
+        
+        // 仅在视频时长有效时跳转
+        if (video.readyState > 0 && video.duration > 0) {
+            const percentage = clickX / rect.width;
+            video.currentTime = percentage * video.duration;
+        } else {
+            console.log('视频尚未准备好');
+            // 可选：显示提示信息
+        }
+        }
+
+        // 音量控制
+        function setVolume(value) {
+            video.volume = value;
+        }
+
+        // 全屏切换
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                video.parentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target.tagName.toLowerCase();
+            // 如果焦点在输入框中，不处理快捷键
+            if (tag === 'textarea' || tag === 'input') return;
+
+            switch(e.key.toLowerCase()) {
+                case ' ':
+                    e.preventDefault();
+                    togglePlayPause();
+                    break;
+                case 'arrowleft':
+                    e.preventDefault();
+                    video.currentTime -= 3;
+                    break;
+                case 'arrowright':
+                    e.preventDefault(); 
+                    video.currentTime += 3;
+                    break;
+                case 'arrowup':
+                    e.preventDefault();
+                    video.currentTime += 0.03;
+                    break;
+                case 'arrowdown':
+                    e.preventDefault();
+                    video.currentTime -= 0.03;
+                    break;
+                case 'f':
+                    toggleFullscreen();
+                    break;
+            }
+        });
+
+        // 添加视频画面点击事件（新增代码）
+        video.addEventListener('click', function() {
+            togglePlayPause();
+        });
+
+        // 启动应用
+        //window.addEventListener('DOMContentLoaded', initApp);
+
+        const ButtonPlace = document.getElementById('ButtonPlace');
+        const dropZone = document.getElementById('dropZone');
+        const progressDiv = document.getElementById('progress');
+
+        // 阻止默认拖放行为
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // 高亮拖放区域
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+            dropZone.style.backgroundColor = '#444';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+            dropZone.style.backgroundColor = 'transparent';
+            }, false);
+        });
+
+    // 处理文件放置
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        console.log("dropZone 收到 drop 事件");
+        console.log("文件数量:", e.dataTransfer.files.length);
+        handleDropToUpload(e);
+    });
+
+    async function handleDropToUpload(e) {
+        e.preventDefault();
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length === 0) return;
+
+        // 提示用户输入系列名（多个文件使用同一系列）
+        let series = prompt("请输入系列名：");
+        if (!series) {
+            alert("系列名不能为空！");
+            return;
+        }
+
+        let visib = prompt("系列是否需要导航按钮？(yes/no):");
+        const order = prompt(`输入系列优先级,目前优先级如下：${JSON.stringify(seriesOrder)}`);
+        if(visib == 'yes') visib = true;
+        else visib = false;
+
+        const moveRes = await fetch(`${API_BASE}/api/series-info`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                series: series,
+                order: order,
+                visible: visib
+            })
+        });
+        if (!moveRes.ok) {
+            alert('失败');
+            return;
+        }
+        //alert('移动成功');
+        // 更新本地 video 对象（供前端显示）
+        seriesOrder[series] = order;
+        seriesinvisible[series] = ! visib;
+        
+        // 显示上传状态（可统一状态也可为每个文件单独更新）
+        showUploadStatus(dropZone, {
+            type: 'uploading',
+            message: '0'
+        });
+
+        // 构造多个上传请求
+        const uploadPromises = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const formData = new FormData();
+            formData.append('video', file);
+            formData.append('series', series);
+            // 调用上传函数，注意：uploadFile 返回一个 Promise
+            uploadPromises.push(uploadFile(formData));
+        }
+        
+        try {
+            // 同时等待所有文件上传完成
+            const responses = await Promise.all(uploadPromises);
+            console.log("所有文件上传成功", responses);
+            // 上传成功后刷新列表
+            await initApp(0, 0);
+            // 显示成功状态，可以提示已上传文件数量
+            showUploadStatus(dropZone, {
+                type: 'success',
+                message: `上传成功 ${files.length} 个文件`
+            });
+        } catch (error) {
+            console.error('上传失败:', error);
+            showUploadStatus(dropZone, {
+                type: 'error',
+                message: '上传失败'
+            });
+        }
+        
+        // 3秒后恢复默认状态
+        setTimeout(() => {
+            resetDropZone(dropZone);
+        }, 5000);
+    }
+
+        function showCancelButton(container){
+
+        }
+
+        // 状态显示函数
+        function showUploadStatus(container, info) {
+        container.className = ''; // 清除旧样式
+        container.classList.add(info.type);
+        
+        let content = '';
+        switch(info.type) {
+            case 'uploading':
+            if(info.message == 100)
+            content = `
+                <div class="feedback-message">压缩中...</div>
+            `;
+            else
+            content = `
+                <div class="feedback-message">上传中...  ${info.message}%</div>
+                <div class="speed-message">${info.speed}</div>
+            `;
+
+            break;
+
+            case 'success':
+            content = `
+                    <div class="feedback-message">✓ 上传成功
+                    </div>
+                    <div class="file-info">
+                        ${info.filename} 
+                        ${formatBytes(info.size)}MB
+                    </div>
+            `;
+            ButtonPlace.innerHTML = '<cubutton style="display: none;" onclick="toggleCancelUpload()">✕取消</cubutton>'
+            //initApp();
+
+            break;
+            
+            
+            case 'error':
+            content = `
+                <div class="feedback-message">✕ ${info.message}</div>
+            `;
+            ButtonPlace.innerHTML = '<cubutton style="display: none;" onclick="toggleCancelUpload()">✕取消</cubutton>'
+
+            break;
+
+            case 'canceled':
+            content = `
+                <div class="feedback-message">⚪ 已取消</div>
+            `;
+
+            break;
+        }
+        
+        container.innerHTML = content;
+        }
+
+        // 重置为默认状态
+        function resetDropZone(container) {
+        container.className = '';
+        container.innerHTML = '<div class="default-message">上传视频并创建新视频系列</div>';
+        ButtonPlace.innerHTML = '<cubutton style="display: none;" onclick="toggleCancelUpload()">✕取消</cubutton>'
+        }
+
+        // 文件大小格式化函数
+        function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i]);
+        }
+        
+        console.log('here1111');
+
+        function generateUUID() {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        }
+
+        // 修改后的上传函数
+        function uploadFile(formData) {
+            console.log(formData.get('video'));
+            return new Promise((resolve, reject) => {
+                xhr = new XMLHttpRequest();
+                // 显示取消按钮（无需依赖 uuid）
+                xhr.uploadId = generateUUID(); // 生成唯一的上传 ID
+                xhr.withCredentials = true;
+                ButtonPlace.innerHTML = '<cubutton style="display: block;" onclick="toggleCancelUpload()">✕取消</cubutton>';
+                
+                // 记录上传开始时间（毫秒）
+                const startTime = Date.now();   
+
+                xhr.upload.addEventListener('progress', e => {
+                    const elapsedSeconds = (Date.now() - startTime) / 1000;
+                    const speedBytesPerSecond = e.loaded / elapsedSeconds;
+                    const speedMBps = (speedBytesPerSecond / (1024 * 1024)).toFixed(2);
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    showUploadStatus(dropZone, {
+                        type: 'uploading',
+                        message: `${percent}`,
+                        speed: `${speedMBps} MB/s`
+                    });
+                });
+                
+                xhr.open('POST', `${API_BASE}/upload`);
+                // 不再传递前端生成的 uuid
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        // 后端返回的数据中包含视频的 id 等信息
+                        resolve(JSON.parse(xhr.response));
+                    } else {
+                        reject(new Error(xhr.statusText));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('网络错误'));
+                xhr.send(formData);
+            });
+        }
+
+        async function toggleCancelUpload() {
+            if (!xhr) return;
+            xhr.abort();
+            const uploadId = xhr.uploadId; // 获取会话ID 
+            console.log('取消上传，ID:', uploadId);
+            //console.log('已取消');
+
+            try {
+            // 通知服务器清理残留文件
+            await fetch(`${API_BASE}/cleanup-upload`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Upload-ID': uploadId
+                }
+            });
+            } catch (error) {
+                console.error('清理请求失败:', error);
+            }
+
+            showUploadStatus(dropZone, {
+                type: 'canceled',
+                message: '已取消'
+                });
+            setTimeout(() => {
+            resetDropZone(dropZone);
+            }, 3000);
+        }
+    document.addEventListener('fullscreenchange', () => {
+        const video = document.getElementById('myVideo');
+        const controls = document.querySelector('.controls');
+        const playPauseButton = document.getElementById('playPauseButton');
+        const FullScreenButton = document.getElementById('FullScreenButton');
+        if (document.fullscreenElement) {
+            // 进入全屏时
+            video.style.maxHeight = '110vh';
+            controls.style.padding = '0px';
+            if (window.screen.width <= 1050) {
+                video.style.height = '100%';
+                playPauseButton.style.padding = '2px 20px';  
+                FullScreenButton.style.padding = '2px 20px'; 
+                controls.style.opacity = 0.5;
+                controls.style.position = 'absolute';
+            } else {
+                video.style.height = '100%';
+            }
+            // video.style.objectFit = 'cover'; // 如需完整显示，可改为 'contain'
+        } else {
+            // 退出全屏后恢复原样（根据你的实际情况恢复空样式或原有样式）
+            video.style.maxHeight = '88vh';
+            controls.style.padding = '8px';
+            video.style.height = '';
+            // video.style.objectFit = '';
+            if (window.screen.width <= 1050){
+                playPauseButton.style.padding = '6px 20px';  
+                FullScreenButton.style.padding = '6px 20px';
+                controls.style.opacity = 1;
+                controls.style.position = 'relative';
+            }
+        }
+
+        if (document.fullscreenElement) {
+            // 尝试锁定横屏（注意：部分浏览器或平台可能不支持）
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(err => console.error('锁定方向失败:', err));
+            }
+        } else {
+            // 退出全屏后解锁
+            if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock();
+            }
+        }
+    });
+
+    let lastTap = 0;
+    video.addEventListener('touchstart', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        if (tapLength < 300 && tapLength > 0) { // 300ms以内视为双击
+            toggleFullscreen();
+        }
+        lastTap = currentTime;
+    });
+
+    document.getElementById('commentInput').addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            handleSubmitComment();
+        }
+    });
+
+    function adjustCommentSection() {
+        const commentSection = document.getElementById('commentSection');
+        const content = document.getElementById('content');
+        const aspectRatio = window.innerWidth / window.innerHeight;
+        if(window.innerWidth <= 1050) {
+            commentSection.style.top = '-2.2vh'; // 手机端默认位置
+            return;
+        }
+
+        const aspectRatio_0 = 2.056;
+        const aspectRatio_1 = 2.1;
+        
+        if (aspectRatio < aspectRatio_1) {
+            // 当长宽比低于时，将评论区移动到视频系列栏下方
+            var top_value = -2.0 - 4.5 - 0.4 * (aspectRatio_0 - aspectRatio) * 100; // 计算新的 top 值
+            commentSection.style.top = `${top_value}vh`;
+        } else {
+            // 当长宽比大于等于时，将评论区放回视频播放器下方
+            var top_value = -2.0 - 4.5 - 0.4 * (aspectRatio_0 - aspectRatio_1) * 100; // 计算新的 top 值
+            commentSection.style.top = `${top_value}vh`;
+        }
+    }
+
+    // 初始调用
+    adjustCommentSection();
+
+    // 监听窗口大小变化
+    window.addEventListener('resize', adjustCommentSection);
+
+    // 示例：优化系列容器拖放处理
+    function addDropEventHandlers(dropElement, onDropCallback) {
+        dropElement.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            if (!dropElement.classList.contains('drag-over')) {
+                dropElement.classList.add('drag-over');
+            }
+        });
+
+        dropElement.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        dropElement.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            setTimeout(() => {
+                if (!e.relatedTarget || !dropElement.contains(e.relatedTarget)) {
+                    dropElement.classList.remove('drag-over');
+                }
+            }, 50);
+        });
+
+        dropElement.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // 阻止冒泡，避免多次触发
+            dropElement.classList.remove('drag-over');
+            // 确保只处理直接落在该区域的事件
+            if (e.target !== dropElement) return;
+
+            // 如果拖入的是文件，不执行 JSON 解析（交由对应上传逻辑处理）
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                return;
+            }
+
+            // 尝试解析拖拽数据
+            const dataStr = e.dataTransfer.getData('application/json');
+            if (!dataStr) {
+                console.error("拖动视频移动失败: 拖拽数据为空");
+                return;
+            }
+            try {
+                const data = JSON.parse(dataStr);
+                onDropCallback(e, data);
+            } catch (err) {
+                console.error("拖动视频移动失败:", err);
+            }
+        });
+    }
+
+    // 自动滚动函数：根据鼠标位置滚动视频列表
+    function autoScroll(e, container) {
+        const rect = container.getBoundingClientRect();
+        const scrollSpeed = 30; // 每次滚动的像素数，可以根据需要调整
+        const threshold = 100;   // 触发滚动的边缘阈值
+
+        // 如果鼠标距离顶部小于阈值，则向上滚动
+        if (e.clientY - rect.top < threshold) {
+            container.scrollTop -= scrollSpeed;
+        }
+        // 如果鼠标距离底部小于阈值，则向下滚动
+        else if (rect.bottom - e.clientY < threshold) {
+            container.scrollTop += scrollSpeed;
+        }
+    }
+
+    // 在 .video-list 上绑定 dragover 事件，调用 autoScroll
+    const videoListContainer = document.querySelector('.video-list');
+    if (videoListContainer) {
+        videoListContainer.addEventListener('dragover', (e) => {
+            autoScroll(e, videoListContainer);
+        });
+    }
+
+    if (videoListContainer) {
+        videoListContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            videoListContainer.scrollTop += e.deltaY;
+        });
+    }
+
+    // 新增：更新子系列内视频排序（调用后端 PUT 接口）
+    // async function updateVideoOrder(container) {
+    //     const seriesContainer = container.closest('.series-group');
+    //     if (!seriesContainer) return;
+    //     // 此处使用 series.name（而非 displayName）作为系列标识
+    //     const series = seriesContainer.dataset.seriesName;
+    //     const subSeries = container.dataset.subseriesName;
+    //     console.log('更新视频排序:', series, subSeries);
+    //     const order = [];
+    //     container.querySelectorAll('.video-item').forEach(item => {
+    //         order.push(item.dataset.videoId);
+    //     });
+    //     try {
+    //         const res = await fetch(`${API_BASE}/api/videos/order`, {
+    //             method: 'PUT',
+    //             headers: { 'Content-Type': 'application/json' },
+    //             body: JSON.stringify({ series, subSeries, order })
+    //         });
+    //         if (!res.ok) {
+    //             console.error('更新视频排序失败');
+    //         }
+    //     } catch (error) {
+    //         console.error('更新视频排序请求出错:', error);
+    //     }
+    // }
+
+    // 启用同一子系列内部的视频拖拽排序
+    // ③ 修改：为同一子系列内拖拽排序及跨子系列拖拽统一绑定事件
+    function enableVideoReorder() {
+        console.log('启用视频排序功能');
+        // 为所有子系列容器绑定 dragover 与 drop 事件
+        const containers = document.querySelectorAll('.video-items');
+        containers.forEach(container => {
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+            });
+            container.addEventListener('drop', (e) => {
+                handleseriesitemDrop(e, container);
+            });
+        });
+        // 为每个视频项绑定拖拽开始和拖拽结束事件
+        const items = document.querySelectorAll('.video-item');
+        items.forEach(item => {
+            item.draggable = true;
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragend', handleDragEnd);
+        });
+    }
+
+    let draggedItem = null;
+    let dragPreview = null;
+
+    function handleDragStart(e) {
+        draggedItem = e.currentTarget;
+        e.dataTransfer.effectAllowed = "move";
+        // 禁止浏览器默认拖拽预览
+        e.dataTransfer.setDragImage(new Image(), 0, 0);
+        draggedItem.classList.add("dragging");
+        // 创建一个自定义预览，克隆 draggedItem
+        dragPreview = draggedItem.cloneNode(true);
+        dragPreview.style.position = 'absolute';
+        dragPreview.style.pointerEvents = 'none';
+        dragPreview.style.opacity = '0.7';
+        dragPreview.style.zIndex = '1000';
+        document.body.appendChild(dragPreview);
+        // 初始位置
+        updateDragPreview(e);
+        document.addEventListener('dragover', updateDragPreview);
+    }
+
+    function updateDragPreview(e) {
+        if (dragPreview) {
+            // 将预览元素显示在鼠标下方10px处
+            dragPreview.style.left = (e.pageX + 10) + 'px';
+            dragPreview.style.top = (e.pageY + 10) + 'px';
+        }
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+    }
+
+    // function handleDrop(e) {
+    //     e.preventDefault();
+    //     // 只处理在同一容器内拖动排序
+    //     if (draggedItem && draggedItem !== e.currentTarget) {
+    //         const container = e.currentTarget.parentElement; // 获取视频项容器
+    //         const rect = e.currentTarget.getBoundingClientRect();
+    //         if (e.clientY - rect.top < rect.height / 2) {
+    //             container.insertBefore(draggedItem, e.currentTarget);
+    //         } else {
+    //             container.insertBefore(draggedItem, e.currentTarget.nextSibling);
+    //         }
+    //         updateVideoOrder(container);
+    //     }
+    // }
+
+    function handleDragEnd(e) {
+        e.currentTarget.classList.remove("dragging");
+        document.removeEventListener('dragover', updateDragPreview);
+        if (dragPreview) {
+            dragPreview.remove();
+            dragPreview = null;
+        }
+        // 清除拖放高亮
+        document.querySelectorAll('.drag-over').forEach(elem => elem.classList.remove('drag-over'));
+        draggedItem = null;
+    }
+
+    // 在切换视频后加载视频简介
+    async function loadVideoDescription(videoId) {
+        try {
+            const res = await fetch(`${API_BASE}/api/descriptions/${videoId}`);
+            if (res.ok) {
+                const data = await res.json();
+                // 更新简介显示区，如果接口返回为空则显示默认提示
+                document.getElementById('videoSummary').textContent = data.description || "点击这里编辑简介...";
+            } else {
+                console.error('加载视频简介失败:', res.status);
+            }
+        } catch (err) {
+            console.error('加载视频简介异常:', err);
+        }
+    }
+
+    // 保存视频简介
+    function saveVideoDescription(videoId, description) {
+        fetch(`${API_BASE}/api/descriptions/${videoId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("保存失败");
+            return res.json();
+        })
+        .then(data => {
+            console.log("简介保存成功:", data);
+        })
+        .catch(err => console.error("保存简介失败:", err));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+    const videoSummaryEl = document.getElementById('videoSummary');
+    // 当简介区域失去焦点时，保存用户的修改
+    videoSummaryEl.addEventListener('blur', () => {
+            if (currentVideo && currentVideo.id) {
+                const newDescription = videoSummaryEl.textContent.trim();
+                saveVideoDescription(currentVideo.id, newDescription);
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if(window.screen.width <= 1050) return;
+        const videoContainer = document.querySelector('.video-container');
+        const controls = document.querySelector('.controls');
+        let hideControlsTimeout;
+
+        // 显示控制栏
+        function showControls() {
+            videoContainer.classList.remove('hide-cursor');
+            controls.style.opacity = '1';
+            if (hideControlsTimeout) {
+                clearTimeout(hideControlsTimeout);
+            }
+        }
+
+        // 隐藏控制栏
+        function hideControls() {
+            controls.style.opacity = '0';
+            videoContainer.classList.add('hide-cursor');
+        }
+
+        // 当鼠标移动时显示控制栏，并设置延迟隐藏
+        videoContainer.addEventListener('mousemove', () => {
+            showControls();
+            hideControlsTimeout = setTimeout(hideControls, 3000); // 1.2秒后隐藏
+            
+        });
+        // 当鼠标离开视频容器时立即隐藏控制栏
+        videoContainer.addEventListener('mouseleave', () => {
+            hideControls();
+            videoContainer.classList.remove('hide-cursor');
+            if (hideControlsTimeout) {
+                clearTimeout(hideControlsTimeout);
+            }
+        });
+    });
+
+    // 在视频事件监听器中添加缓冲更新
+    video.addEventListener('progress', updateBufferProgress);
+    video.addEventListener('timeupdate', updateBufferProgress);
+
+    function updateBufferProgress() {
+    const bufferBar = document.querySelector('.buffer-bar');
+    if (video.buffered.length > 0) {
+        // 获取最后一个缓冲区间
+        const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+        const bufferPercentage = (bufferedEnd / video.duration) * 100;
+        bufferBar.style.width = bufferPercentage + '%';
+    }
+    }
+
+    // 在播放器初始化时调用一次
+    updateBufferProgress();
+    </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>我的博客</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    .post { border-bottom: 1px solid #ccc; padding: 10px 0; }
+    .post-title { font-size: 1.5em; color: #444; }
+    .post-content { margin: 10px 0; }
+    form { margin-top: 20px; }
+    input, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+    button { padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <h1>我的博客</h1>
+  <div id="posts"></div>
+
+  <h2>发布新博文</h2>
+  <form id="postForm">
+    <input type="text" id="title" placeholder="请输入标题" required>
+    <textarea id="content" rows="5" placeholder="请输入内容" required></textarea>
+    <button type="submit">发布文章</button>
+  </form>
+
+  <script>
+    // 加载所有博客文章并展示在页面上
+    async function loadPosts() {
+      try {
+        const res = await fetch('/api/posts');
+        const data = await res.json();
+        const postsDiv = document.getElementById('posts');
+        postsDiv.innerHTML = data.posts.map(post => 
+          `<div class="post">
+             <div class="post-title">${post.title}</div>
+             <div class="post-content">${post.content}</div>
+           </div>`).join('');
+      } catch(e) {
+        console.error('加载文章失败', e);
+      }
+    }
+
+    // 监听发布文章表单提交事件
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const content = document.getElementById('content').value;
+      try {
+        const res = await fetch('/api/posts', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ title, content })
+        });
+        const result = await res.json();
+        if(result.success){
+          document.getElementById('title').value = '';
+          document.getElementById('content').value = '';
+          loadPosts();
+        } else {
+          alert(result.error);
+        }
+      } catch(e) {
+        console.error('发布文章失败', e);
+      }
+    });
+
+    // 初始化加载博客文章
+    loadPosts();
+  </script>
+</body>
+</html>
