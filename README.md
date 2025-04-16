@@ -8,9 +8,9 @@
 - favicon.ico
 - favorites.json
 - history.json
--videos
-  -各种.json
-  -视频系列1
-  -视频系列2
--images
-  -各种图标
+- videos
+  - 各种.json
+  - 视频系列1
+  - 视频系列2
+- images
+  - 各种图标
